@@ -1,0 +1,77 @@
+name: college_level
+description: "College Level — a multi-tenant college LMS client."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # State management
+  flutter_bloc: ^9.1.1
+  equatable: ^2.0.7
+
+  # Dependency injection
+  get_it: ^8.0.3
+
+  # Routing
+  go_router: ^16.0.0
+
+  # Networking
+  dio: ^5.7.0
+
+  # Functional error handling
+  dartz: ^0.10.1
+
+  # Storage
+  flutter_secure_storage: ^9.2.4
+  shared_preferences: ^2.3.5
+
+  # Editors / rendering
+  re_editor: ^0.7.0
+  re_highlight: ^0.0.3
+  flutter_markdown_plus: ^1.0.3
+  flutter_math_fork: ^0.7.3
+
+  # Charts
+  fl_chart: ^1.0.0
+
+  # Files & media
+  cached_network_image: ^3.4.1
+  # Profile-picture selection. First-party (flutter.dev); its XFile.path feeds
+  # straight into DioClient.uploadFile, which already takes a path.
+  image_picker: ^1.2.3
+  # Renders the same embeds the web app puts in an <iframe> (YouTube, Vimeo)
+  # and plays direct video files. The platform packages are declared so the
+  # player can be told to play inline instead of hijacking the screen.
+  webview_flutter: ^4.10.0
+  webview_flutter_android: ^4.3.0
+  webview_flutter_wkwebview: ^3.18.0
+
+  # Misc
+  intl: ^0.20.2
+  url_launcher: ^6.3.1
+  flutter_svg: ^2.0.17
+  shimmer: ^3.0.0
+  collection: ^1.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  bloc_test: ^10.0.0
+  mocktail: ^1.0.4
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  # Compiled by impellerc at build time and loaded through
+  # `FragmentProgram.fromAsset`. Not a dependency — a first-party asset.
+  shaders:
+    - shaders/liquid_glass_refraction.frag
