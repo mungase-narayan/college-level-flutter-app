@@ -8,6 +8,7 @@ export 'app_button.dart';
 export 'app_card.dart';
 export 'app_dialogs.dart';
 export 'app_inputs.dart';
+export 'app_logo.dart';
 export 'app_markdown.dart';
 export 'app_paginator.dart';
 export 'app_stat_tile.dart';

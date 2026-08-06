@@ -1,0 +1,7 @@
+<resources>
+  <!-- Sampled from the opaque square baked into ic_launcher_foreground.png.
+       That square covers exactly the adaptive icon's central 72dp safe zone,
+       so this only shows at the mask edge — it has to match, or the seam reads
+       as a visible square. -->
+  <color name="ic_launcher_background">#5d1ee4</color>
+</resources>

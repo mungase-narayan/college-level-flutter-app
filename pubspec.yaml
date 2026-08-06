@@ -71,6 +71,11 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
+  assets:
+    # The launcher artwork, reused by the boot splash so the first frame
+    # matches the icon the user just tapped.
+    - assets/images/app_logo.png
+
   # Compiled by impellerc at build time and loaded through
   # `FragmentProgram.fromAsset`. Not a dependency — a first-party asset.
   shaders:
