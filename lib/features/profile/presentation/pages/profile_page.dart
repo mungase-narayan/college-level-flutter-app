@@ -86,14 +86,18 @@ class ProfilePage extends StatelessWidget {
           if (state.roles.isNotEmpty)
             LiquidGlassSection(
               header: state.roles.length > 1 ? 'ROLES' : 'ROLE',
+              // The description lives in the footer rather than as a row
+              // subtitle: at this width it wrapped to two lines and crushed the
+              // "Active" badge. A single-line row with a trailing badge matches
+              // the Status row above, and the footer is where iOS puts the
+              // explanatory text anyway.
               footer: state.roles.length > 1
                   ? 'You can switch between your roles from Settings.'
-                  : null,
+                  : state.roles.first.name.description,
               children: [
                 for (final role in state.roles)
                   LiquidGlassListTile(
                     title: role.name.label,
-                    subtitle: role.name.description,
                     leadingIcon: role.name.icon,
                     trailing: role.name == state.activeRole
                         ? const AppBadge('Active',

@@ -52,15 +52,14 @@ class StudentDrawer extends StatelessWidget {
   }
 }
 
-/// The gradient mortarboard chip + "College Level" / "Student Portal" block
-/// from `MobileStudentSidebar`.
+/// The app-logo chip + school name / "Student Portal" block from
+/// `MobileStudentSidebar`.
 class _DrawerHeader extends StatelessWidget {
   const _DrawerHeader();
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final scheme = context.scheme;
 
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
@@ -70,21 +69,7 @@ class _DrawerHeader extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
           child: Row(
             children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [scheme.primary, scheme.chart[3]],
-                  ),
-                  borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-                ),
-                child: Icon(
-                  Icons.school_rounded,
-                  size: 20,
-                  color: scheme.primaryForeground,
-                ),
-              ),
+              const AppLogo(size: 38),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(

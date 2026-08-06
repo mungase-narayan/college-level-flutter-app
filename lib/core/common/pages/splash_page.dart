@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../config/theme/app_theme.dart';
+import '../widgets/widgets.dart';
 
 /// Shown while the persisted session is read out of secure storage at boot.
 ///
@@ -11,26 +12,14 @@ class SplashPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = context.scheme;
-
     return Scaffold(
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 62,
-              height: 62,
-              decoration: BoxDecoration(
-                color: scheme.primary,
-                borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-              ),
-              child: Icon(
-                Icons.school_rounded,
-                size: 32,
-                color: scheme.primaryForeground,
-              ),
-            ),
+            // The launcher artwork itself, so the splash reads as a
+            // continuation of the icon the user just tapped.
+            const AppLogo(size: 62, radius: AppTheme.radiusLg),
             const SizedBox(height: 22),
             Text('College Level', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 24),
