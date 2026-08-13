@@ -38,6 +38,10 @@ dependencies:
   re_highlight: ^0.0.3
   flutter_markdown_plus: ^1.0.3
   flutter_math_fork: ^0.7.3
+  # The AST behind flutter_markdown_plus. Declared directly because the rich
+  # content blocks add their own inline syntaxes (math, ==highlight==, the raw
+  # HTML allow-list) on top of it.
+  markdown: ^7.3.1
 
   # Charts
   fl_chart: ^1.0.0

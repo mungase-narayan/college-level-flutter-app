@@ -13,6 +13,15 @@ import '../../../features/courses/data/datasources/course_service.dart';
 import '../../../features/courses/data/repositories/course_repository_impl.dart';
 import '../../../features/courses/domain/repositories/course_repository.dart';
 import '../../../features/courses/domain/usecases/course_usecases.dart';
+import '../../../features/courses/domain/usecases/material_comment_usecases.dart';
+import '../../../features/files/data/datasources/file_service.dart';
+import '../../../features/files/data/repositories/file_repository_impl.dart';
+import '../../../features/files/domain/repositories/file_repository.dart';
+import '../../../features/files/domain/usecases/file_usecases.dart';
+import '../../../features/notes/data/datasources/notes_service.dart';
+import '../../../features/notes/data/repositories/notes_repository_impl.dart';
+import '../../../features/notes/domain/repositories/notes_repository.dart';
+import '../../../features/notes/domain/usecases/notes_usecases.dart';
 import '../../../features/practice/data/datasources/practice_service.dart';
 import '../../../features/practice/data/repositories/practice_repository_impl.dart';
 import '../../../features/practice/domain/repositories/practice_repository.dart';
@@ -64,6 +73,28 @@ Future<void> initServiceLocator() async {
   _initLeaderboard();
   _initAssessments();
   _initAttendance();
+  _initFiles();
+  _initNotes();
+}
+
+/// File metadata and presigned URLs — used by material attachments, and by
+/// anything else that stores a bare file uuid.
+void _initFiles() {
+  sl
+    ..registerLazySingleton<FileService>(() => FileService(sl()))
+    ..registerLazySingleton<FileRepository>(() => FileRepositoryImpl(sl()))
+    ..registerLazySingleton(() => GetFileUseCase(sl()))
+    ..registerLazySingleton(() => ResolveFileUrlUseCase(sl()));
+}
+
+/// Scoped to what the material Notes tab needs — listing the notes linked to a
+/// material and creating one. The notes hub is a later pass.
+void _initNotes() {
+  sl
+    ..registerLazySingleton<NotesService>(() => NotesService(sl()))
+    ..registerLazySingleton<NotesRepository>(() => NotesRepositoryImpl(sl()))
+    ..registerLazySingleton(() => ListNotesUseCase(sl()))
+    ..registerLazySingleton(() => CreateNoteUseCase(sl()));
 }
 
 void _initAssessments() {
@@ -175,7 +206,13 @@ void _initCourses() {
     ..registerLazySingleton(() => ListEnrolledCoursesUseCase(sl()))
     ..registerLazySingleton(() => GetCourseUseCase(sl()))
     ..registerLazySingleton(() => GetCourseTreeUseCase(sl()))
-    ..registerLazySingleton(() => SetMaterialCompletedUseCase(sl()));
+    ..registerLazySingleton(() => SetMaterialCompletedUseCase(sl()))
+    // The material comment thread, all five verbs.
+    ..registerLazySingleton(() => ListMaterialCommentsUseCase(sl()))
+    ..registerLazySingleton(() => CreateMaterialCommentUseCase(sl()))
+    ..registerLazySingleton(() => ReplyToMaterialCommentUseCase(sl()))
+    ..registerLazySingleton(() => UpdateMaterialCommentUseCase(sl()))
+    ..registerLazySingleton(() => DeleteMaterialCommentUseCase(sl()));
 }
 
 void _initPractice() {

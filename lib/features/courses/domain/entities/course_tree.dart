@@ -29,8 +29,47 @@ class CourseTree extends Equatable {
   int get totalTopics =>
       modules.fold(0, (sum, module) => sum + module.topics.length);
 
+  /// Finds a material and the module/topic it sits under.
+  ///
+  /// The material page holds only an id and re-derives the rest from the
+  /// current tree on every build, so a completion toggle that refetches shows
+  /// through without any state to keep in sync. This is the port of
+  /// `findSelected()` in `student/courses/detail/learning-plan/index.tsx`.
+  MaterialLocation? locate(String materialId) {
+    for (final module in modules) {
+      for (final topic in module.topics) {
+        for (final material in topic.materials) {
+          if (material.id == materialId) {
+            return MaterialLocation(
+              module: module,
+              topic: topic,
+              material: material,
+            );
+          }
+        }
+      }
+    }
+    return null;
+  }
+
   @override
   List<Object?> get props => [id, name, code, modules, progress];
+}
+
+/// A material together with where it sits in the tree.
+class MaterialLocation extends Equatable {
+  const MaterialLocation({
+    required this.module,
+    required this.topic,
+    required this.material,
+  });
+
+  final CourseModule module;
+  final CourseTopic topic;
+  final CourseMaterial material;
+
+  @override
+  List<Object?> get props => [module, topic, material];
 }
 
 class CourseModule extends Equatable {
