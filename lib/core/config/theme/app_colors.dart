@@ -169,6 +169,20 @@ class TwColors {
   static const pink = TwShade(Color(0xFFF9A8D4), Color(0xFFF472B6), Color(0xFFEC4899), Color(0xFFBE185D));
 }
 
+/// Parses a `#rrggbb` colour as the API sends it — a course's `colorCode`, a
+/// rating tier's tint — returning null when it is absent or malformed.
+///
+/// The API's colours are free-form strings set by a teacher, so anything from
+/// an empty field to `rgb(1,2,3)` can arrive; every caller wants the same
+/// "usable colour, or fall back to the theme" answer.
+Color? parseHexColor(String? hex) {
+  if (hex == null) return null;
+  final cleaned = hex.replaceFirst('#', '').trim();
+  if (cleaned.length != 6) return null;
+  final value = int.tryParse(cleaned, radix: 16);
+  return value == null ? null : Color(0xFF000000 | value);
+}
+
 /// The four Tailwind shades the badge idiom needs.
 class TwShade {
   const TwShade(this.s300, this.s400, this.s500, this.s700);

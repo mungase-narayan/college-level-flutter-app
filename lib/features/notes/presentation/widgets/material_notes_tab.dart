@@ -8,13 +8,20 @@ import '../../../../core/utils/formatters.dart';
 import '../../domain/entities/note.dart';
 import '../bloc/material_notes_cubit.dart';
 
-/// Port of `NotesSection` scoped to a course material: the notes filed against
-/// this material, plus a composer that pre-links a new one to it.
+/// Port of `NotesSection` scoped to one thing: the notes filed against it, plus
+/// a composer that pre-links a new one.
+///
+/// What it is scoped *to* comes from the ambient `MaterialNotesCubit`'s
+/// [NoteLinkContext], so the same tab serves a course material and a practice
+/// question; [subject] is only the word the copy uses.
 ///
 /// The full notes hub — detail, likes, note comments, sharing — is a later
-/// pass; this is only the embedded list the material tab shows.
+/// pass; this is only the embedded list a tab shows.
 class MaterialNotesTab extends StatefulWidget {
-  const MaterialNotesTab({super.key});
+  const MaterialNotesTab({super.key, this.subject = 'material'});
+
+  /// Named in the composer's subtitle and the empty state.
+  final String subject;
 
   @override
   State<MaterialNotesTab> createState() => _MaterialNotesTabState();
@@ -33,7 +40,7 @@ class _MaterialNotesTabState extends State<MaterialNotesTab> {
     final draft = await showAppSheet<_NoteDraft>(
       context,
       title: 'New note',
-      subtitle: 'Linked to this material.',
+      subtitle: 'Linked to this ${widget.subject}.',
       builder: (_) => const _NoteComposer(),
     );
     if (draft == null || !mounted) return;
@@ -66,7 +73,7 @@ class _MaterialNotesTabState extends State<MaterialNotesTab> {
             children: [
               Expanded(
                 child: Text(
-                  'Notes shared for this material.',
+                  'Notes shared for this ${widget.subject}.',
                   style: theme.textTheme.bodySmall,
                 ),
               ),
@@ -93,12 +100,12 @@ class _MaterialNotesTabState extends State<MaterialNotesTab> {
                 if (notes.isEmpty) {
                   return ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    children: const [
-                      SizedBox(height: 28),
+                    children: [
+                      const SizedBox(height: 28),
                       AppEmptyState(
                         title: 'No notes yet',
                         description:
-                            'Be the first to write a note for this material.',
+                            'Be the first to write a note for this ${widget.subject}.',
                         icon: Icons.sticky_note_2_outlined,
                       ),
                     ],

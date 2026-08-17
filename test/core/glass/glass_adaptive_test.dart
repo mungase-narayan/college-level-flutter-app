@@ -337,6 +337,309 @@ void main() {
 
       expect(selected, [2, 3]);
     });
+
+    /// A slot-width pill gives each label whatever space is left over after the
+    /// slot is divided up, which across five tabs on a phone came to ~7pt around a
+    /// word like "Courses" — tight enough that the lozenge looked clamped onto the
+    /// text. Sizing from the label instead keeps that air constant, borrowing the
+    /// gap between neighbouring tabs, which is where the room was going unused.
+    testWidgets('the pill keeps constant air around any label', (tester) async {
+      AppPlatform.debugUseGlassOverride = true;
+      tester.view.physicalSize = const Size(402 * 3, 874 * 3);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+
+      // Equal-length labels, so every tab wants the same width and none of them
+      // is close enough to a neighbour for the crowding cap to interfere. The
+      // suite's own `items` cannot show this: the test font draws one em per
+      // character, so "Practice" comes out 87pt wide in a 90pt slot — the
+      // proportions of real text at about 180% Dynamic Type, where the pill is
+      // supposed to give width up rather than take it.
+      const even = [
+        GlassNavItem(label: 'Home', icon: Icons.home_outlined),
+        GlassNavItem(label: 'Data', icon: Icons.menu_book_outlined),
+        GlassNavItem(label: 'Plan', icon: Icons.extension_outlined),
+        GlassNavItem(label: 'More', icon: Icons.more_horiz_rounded),
+      ];
+
+      Finder pill() => find
+          .descendant(
+            of: find.byType(LiquidGlassNavigationBar),
+            matching: find.byType(LiquidGlassContainer),
+          )
+          .last;
+
+      // Both interior slots — the two that sit clear of the rim, so the padding
+      // is free to apply in full.
+      for (final index in [1, 2]) {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: LiquidGlassTheme.light,
+            home: GlassScope(
+              child: Scaffold(
+                bottomNavigationBar: LiquidGlassNavigationBar(
+                  items: even,
+                  currentIndex: index,
+                  onSelected: (_) {},
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final label = find.text(even[index].label);
+        final air = tester.getSize(pill()).width - tester.getSize(label).width;
+
+        expect(
+          air / 2,
+          closeTo(GlassMetrics.navBarPillPadding, 0.5),
+          reason: '${even[index].label} is crowding its pill',
+        );
+
+        // And it stays centred on its own tab rather than drifting toward the
+        // space it borrowed.
+        expect(
+          tester.getCenter(pill()).dx,
+          closeTo(tester.getCenter(label).dx, 0.5),
+        );
+      }
+    });
+
+    /// At the two end slots the leftover space between the pill's rounded cap and
+    /// the capsule's forms a visible crescent, and it is the one gap in the design
+    /// the eye can compare directly against the band above and below the pill. If
+    /// the pill stops short of the rim by more than the inset — which is what
+    /// happens when a short label like "Home" asks for less width than the rim
+    /// allows — it reads as adrift inside the bar rather than nested in it.
+    testWidgets('an end tab is inset equally on all four sides', (tester) async {
+      AppPlatform.debugUseGlassOverride = true;
+      tester.view.physicalSize = const Size(402 * 3, 874 * 3);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+
+      // Five destinations, as the shell has: the slot width is what decides
+      // whether the rim or the label caps the pill, so a four-tab stand-in would
+      // not exercise the same branch.
+      //
+      // Two label lengths, because they reach the same result by different routes
+      // and only the short one is a real test. A long end label wants more width
+      // than the rim allows and gets clamped to it for free; a short one wants
+      // less, and only lands flush because the pill closes the remaining sliver.
+      // The suite's fixed-width test font makes even "Home" long by this measure,
+      // so without the two-letter case this test passes with the rule deleted.
+      const sets = <List<GlassNavItem>>[
+        [
+          GlassNavItem(label: 'Home', icon: Icons.home_outlined),
+          GlassNavItem(label: 'Courses', icon: Icons.menu_book_outlined),
+          GlassNavItem(label: 'Practice', icon: Icons.extension_outlined),
+          GlassNavItem(label: 'Profile', icon: Icons.person_outline),
+          GlassNavItem(label: 'Menu', icon: Icons.more_horiz_rounded),
+        ],
+        [
+          GlassNavItem(label: 'Me', icon: Icons.home_outlined),
+          GlassNavItem(label: 'Courses', icon: Icons.menu_book_outlined),
+          GlassNavItem(label: 'Practice', icon: Icons.extension_outlined),
+          GlassNavItem(label: 'Profile', icon: Icons.person_outline),
+          GlassNavItem(label: 'Go', icon: Icons.more_horiz_rounded),
+        ],
+      ];
+
+      for (final items in sets) {
+        for (final index in [0, items.length - 1]) {
+          await tester.pumpWidget(
+            MaterialApp(
+              theme: LiquidGlassTheme.light,
+              home: GlassScope(
+                child: Scaffold(
+                  bottomNavigationBar: LiquidGlassNavigationBar(
+                    items: items,
+                    currentIndex: index,
+                    onSelected: (_) {},
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+
+          final containers = find.descendant(
+            of: find.byType(LiquidGlassNavigationBar),
+            matching: find.byType(LiquidGlassContainer),
+          );
+          final capsule = tester.getRect(containers.first);
+          final pill = tester.getRect(containers.last);
+
+          const inset = GlassMetrics.navBarPillInset;
+          final outward =
+              index == 0 ? pill.left - capsule.left : capsule.right - pill.right;
+
+          expect(
+            outward,
+            closeTo(inset, 0.5),
+            reason: '"${items[index].label}" floats away from the rim '
+                'it sits against',
+          );
+          expect(pill.top - capsule.top, closeTo(inset, 0.5));
+          expect(capsule.bottom - pill.bottom, closeTo(inset, 0.5));
+        }
+      }
+    });
+
+    /// The counterweight to sizing from the label: a word wide enough to want
+    /// more room than its slot has must not get it, or the lozenge ends up
+    /// sitting behind the neighbouring tab's text. The test font puts every label
+    /// in exactly that regime, which is what makes this checkable at all.
+    testWidgets('a wide label never pushes the pill under its neighbour',
+        (tester) async {
+      AppPlatform.debugUseGlassOverride = true;
+      tester.view.physicalSize = const Size(402 * 3, 874 * 3);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: LiquidGlassTheme.light,
+          home: GlassScope(
+            child: Scaffold(
+              bottomNavigationBar: LiquidGlassNavigationBar(
+                items: items,
+                currentIndex: 1,
+                onSelected: (_) {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final pill = tester.getRect(
+        find
+            .descendant(
+              of: find.byType(LiquidGlassNavigationBar),
+              matching: find.byType(LiquidGlassContainer),
+            )
+            .last,
+      );
+
+      expect(pill.left, greaterThan(tester.getRect(find.text('Home')).right));
+      expect(
+        pill.right,
+        lessThan(tester.getRect(find.text('Practice')).left),
+      );
+
+      // Even squeezed, it still covers the label it belongs to.
+      final own = tester.getRect(find.text('Courses'));
+      expect(pill.left, lessThan(own.left));
+      expect(pill.right, greaterThan(own.right));
+    });
+
+    /// The end slots have only half a slot of room before the rim. The pill has to
+    /// give up width there rather than grow into the rim, or it would slide off
+    /// the icon it is meant to be behind.
+    testWidgets('an end tab keeps its pill centred, not wide', (tester) async {
+      AppPlatform.debugUseGlassOverride = true;
+      tester.view.physicalSize = const Size(402 * 3, 874 * 3);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: LiquidGlassTheme.light,
+          home: GlassScope(
+            child: Scaffold(
+              bottomNavigationBar: LiquidGlassNavigationBar(
+                items: items,
+                currentIndex: 0,
+                onSelected: (_) {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final pill = tester.getRect(
+        find
+            .descendant(
+              of: find.byType(LiquidGlassNavigationBar),
+              matching: find.byType(LiquidGlassContainer),
+            )
+            .last,
+      );
+
+      expect(pill.center.dx, closeTo(tester.getCenter(find.text('Home')).dx, 0.5));
+      expect(pill.width, greaterThanOrEqualTo(GlassMetrics.navBarPillMinWidth));
+    });
+
+    /// The pill both springs (which overshoots) and stretches along its travel.
+    /// Either one, unclamped, drives it under the capsule's rounded rim at the
+    /// first and last slots, where the clip shears its end flat and it reads as a
+    /// blob bursting out of the bar rather than a lozenge sitting inside it.
+    testWidgets('the selection pill never leaves the capsule', (tester) async {
+      AppPlatform.debugUseGlassOverride = true;
+      var index = 0;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: LiquidGlassTheme.light,
+          home: GlassScope(
+            child: StatefulBuilder(
+              builder: (context, setState) => Scaffold(
+                bottomNavigationBar: LiquidGlassNavigationBar(
+                  items: items,
+                  currentIndex: index,
+                  onSelected: (value) => setState(() => index = value),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      Rect capsule() => tester.getRect(
+            find
+                .descendant(
+                  of: find.byType(LiquidGlassNavigationBar),
+                  matching: find.byType(LiquidGlassContainer),
+                )
+                .first,
+          );
+      Rect pill() => tester.getRect(
+            find
+                .descendant(
+                  of: find.byType(LiquidGlassNavigationBar),
+                  matching: find.byType(LiquidGlassContainer),
+                )
+                .last,
+          );
+
+      // Both directions: the overshoot only threatens the rim at the end the pill
+      // is arriving at, so a one-way trip would miss half of it.
+      for (final label in ['Menu', 'Home', 'Practice', 'Menu']) {
+        await tester.tap(find.text(label));
+        // Sampled across the whole travel rather than only at rest — the
+        // violation exists for a few frames in the middle and is invisible to a
+        // settled-state assertion.
+        for (var frame = 0; frame < 24; frame++) {
+          await tester.pump(const Duration(milliseconds: 16));
+          final bar = capsule();
+          final selection = pill();
+          expect(
+            selection.left,
+            greaterThanOrEqualTo(bar.left + GlassMetrics.navBarPillInset - 0.01),
+            reason: 'pill escaped the left rim heading to $label',
+          );
+          expect(
+            selection.right,
+            lessThanOrEqualTo(bar.right - GlassMetrics.navBarPillInset + 0.01),
+            reason: 'pill escaped the right rim heading to $label',
+          );
+        }
+        await tester.pumpAndSettle();
+      }
+    });
   });
 
   group('LiquidGlassAppBar', () {
@@ -589,19 +892,24 @@ void main() {
       expect(mid.a, greaterThan(glass.chrome.tint.a));
     });
 
-    test('the nav capsule is blurrier and more see-through than the app bar', () {
+    test('the nav capsule is thinner and lighter-blurred than the app bar', () {
       const glass = ResolvedGlass(
         tokens: GlassTokens.dark,
         reduceTransparency: false,
         reduceMotion: false,
       );
 
-      // The two surfaces want opposite trade-offs. The capsule is small with
-      // content passing directly beneath it, so it leans on a heavy blur to stay
-      // legible while remaining translucent; the app bar spans the full width and
-      // leans on its tint instead. Reusing the app bar's material made the capsule
-      // read as solid white with the card behind it invisible.
-      expect(glass.navBarSigma(0), greaterThan(glass.chromeSigma(0)));
+      // The two surfaces want opposite trade-offs, and this is the direction that
+      // took two attempts to get right. The app bar spans the full width under the
+      // status bar and can afford to obliterate what passes beneath it. The capsule
+      // is a small object floating over the page, and what makes it read as glass
+      // rather than as a rounded white slab is that you can *see what it is on top
+      // of* — so it gets both a thinner tint and a lighter blur.
+      //
+      // It has been wrong in both directions: reusing the app bar's material made
+      // it look solid, and over-correcting to 60 sigma made everything behind it
+      // render identically, which looks solid for a different reason.
+      expect(glass.navBarSigma(0), lessThan(glass.chromeSigma(0)));
       expect(glass.navBarSigma(0), GlassMetrics.navBarBlurSigma);
       expect(glass.navBarSigma(1), GlassMetrics.navBarBlurSigmaScrolled);
 
@@ -613,6 +921,59 @@ void main() {
 
       // Still opaque enough to grow more legible once content is behind it.
       expect(glass.navBarScrolled.tint.a, greaterThan(glass.navBar.tint.a));
+    });
+
+    /// The selection pill is a second layer *of* glass, not a lozenge painted on
+    /// top of it. If it ever goes opaque it can no longer pick up the colour of
+    /// whatever is blurring past underneath — which is the entire reason the
+    /// reference bar's selected tab looks pale green over a green book cover.
+    test('the nav pill is glass on glass, not a solid lozenge', () {
+      for (final tokens in [GlassTokens.dark, GlassTokens.light]) {
+        final glass = ResolvedGlass(
+          tokens: tokens,
+          reduceTransparency: false,
+          reduceMotion: false,
+        );
+
+        expect(
+          glass.navPillTint.a,
+          lessThan(0.6),
+          reason: 'the content under the capsule must tint the pill',
+        );
+
+        // Still enough body to read as a selected state at all.
+        expect(glass.navPillTint.a, greaterThan(0.15));
+      }
+    });
+
+    /// The two indicators are not interchangeable, which is why they are separate
+    /// tokens. The segmented thumb sits on an opaque card with nothing behind it,
+    /// so in the light scheme it is near-solid; giving the nav pill that same fill
+    /// is exactly what made it a white lozenge painted on the glass.
+    test('the nav pill is far more translucent than the segmented thumb', () {
+      const glass = ResolvedGlass(
+        tokens: GlassTokens.light,
+        reduceTransparency: false,
+        reduceMotion: false,
+      );
+
+      expect(glass.pillTint.a, greaterThan(0.85));
+      expect(glass.navPillTint.a, lessThan(glass.pillTint.a - 0.3));
+    });
+
+    test('reduce transparency leaves the nav pill fully opaque', () {
+      for (final tokens in [GlassTokens.dark, GlassTokens.light]) {
+        final glass = ResolvedGlass(
+          tokens: tokens,
+          reduceTransparency: true,
+          reduceMotion: false,
+        );
+
+        // Nothing shows through an opaque capsule, so a translucent pill on top
+        // of one would just be a washed-out fill.
+        expect(glass.navPillTint.a, 1.0);
+        expect(glass.navPillBorder.a, greaterThan(0));
+      }
     });
 
     test('the capsule blur ramps monotonically in both schemes', () {
@@ -917,6 +1278,50 @@ void main() {
       // Either a bare blur (shader unavailable) or a blur composed under the
       // refraction — never a shader alone, so the capsule always frosts.
       expect(filter.toString(), contains('blur'));
+    });
+
+    test('saturation is free unless a surface asks for it', () {
+      final plain = GlassRefraction.filter(
+        sigma: 30,
+        radius: 999,
+        size: const Size(358, 66),
+      );
+      final boosted = GlassRefraction.filter(
+        sigma: 30,
+        radius: 999,
+        size: const Size(358, 66),
+        saturation: GlassMetrics.navBarSaturation,
+      );
+
+      // Default is a no-op: every other glass surface in the app must keep the
+      // exact filter chain it had, with no extra compose to rasterise.
+      expect(plain.toString(), isNot(contains('ColorFilter')));
+      expect(boosted.toString(), contains('ColorFilter'));
+
+      // And nothing is dropped when it is applied — the blur is still in there.
+      expect(boosted.toString(), contains('blur'));
+    });
+
+    test('the saturation matrix leaves greys alone', () {
+      final m = GlassRefraction.saturationMatrix(GlassMetrics.navBarSaturation);
+      expect(m, hasLength(20));
+
+      // Each colour row must sum to 1, or a boost would also brighten or darken
+      // the backdrop instead of only enriching its colour.
+      for (var row = 0; row < 3; row++) {
+        final sum = m[row * 5] + m[row * 5 + 1] + m[row * 5 + 2];
+        expect(sum, closeTo(1.0, 1e-6), reason: 'row $row shifts luminance');
+        expect(m[row * 5 + 4], 0, reason: 'row $row adds an offset');
+      }
+
+      // Alpha passes through untouched: saturating a translucent backdrop must
+      // not make the surface more or less see-through.
+      expect(m.sublist(15), [0, 0, 0, 1, 0]);
+
+      // 1.0 really is identity, which is what makes the default path free.
+      final identity = GlassRefraction.saturationMatrix(1.0);
+      expect(identity[0], closeTo(1.0, 1e-6));
+      expect(identity[1], closeTo(0.0, 1e-6));
     });
 
     test('a shader failure is not retried every frame', () {

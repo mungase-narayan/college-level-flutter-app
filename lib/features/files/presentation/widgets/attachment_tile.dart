@@ -16,9 +16,14 @@ import '../../domain/usecases/file_usecases.dart';
 /// file first and only then knows its name, size, and category. Images and PDFs
 /// preview in place; everything else opens in the platform's own viewer.
 class AttachmentTile extends StatefulWidget {
-  const AttachmentTile({super.key, required this.fileId});
+  const AttachmentTile({super.key, required this.fileId, this.onRemove});
 
   final String fileId;
+
+  /// Shown as a trailing `×` when set — the edit-mode affordance for a file the
+  /// student has just attached to a submission. Absent everywhere a file is
+  /// only being read.
+  final VoidCallback? onRemove;
 
   @override
   State<AttachmentTile> createState() => _AttachmentTileState();
@@ -146,6 +151,19 @@ class _AttachmentTileState extends State<AttachmentTile> {
                 ],
               ),
             ),
+            // Also offered here: a file the server won't describe is exactly
+            // the one a student most needs to be able to detach.
+            if (widget.onRemove != null)
+              IconButton(
+                onPressed: widget.onRemove,
+                visualDensity: VisualDensity.compact,
+                tooltip: 'Remove attachment',
+                icon: Icon(
+                  Icons.close_rounded,
+                  size: 18,
+                  color: scheme.destructive,
+                ),
+              ),
           ],
         ),
       );
@@ -212,6 +230,17 @@ class _AttachmentTileState extends State<AttachmentTile> {
                     color: scheme.mutedForeground,
                   ),
                 ),
+                if (widget.onRemove != null)
+                  IconButton(
+                    onPressed: widget.onRemove,
+                    visualDensity: VisualDensity.compact,
+                    tooltip: 'Remove ${file.displayName}',
+                    icon: Icon(
+                      Icons.close_rounded,
+                      size: 18,
+                      color: scheme.destructive,
+                    ),
+                  ),
               ],
             ],
           ),

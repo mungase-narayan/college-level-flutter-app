@@ -34,7 +34,7 @@ dependencies:
   shared_preferences: ^2.3.5
 
   # Editors / rendering
-  re_editor: ^0.7.0
+  re_editor: ^0.10.0
   re_highlight: ^0.0.3
   flutter_markdown_plus: ^1.0.3
   flutter_math_fork: ^0.7.3
@@ -51,6 +51,9 @@ dependencies:
   # Profile-picture selection. First-party (flutter.dev); its XFile.path feeds
   # straight into DioClient.uploadFile, which already takes a path.
   image_picker: ^1.2.3
+  # Assignment attachments. image_picker cannot reach a PDF or a DOCX, which is
+  # what a handed-in assignment normally is; this opens the OS document picker.
+  file_picker: ^8.1.7
   # Renders the same embeds the web app puts in an <iframe> (YouTube, Vimeo)
   # and plays direct video files. The platform packages are declared so the
   # player can be told to play inline instead of hijacking the screen.
@@ -64,6 +67,9 @@ dependencies:
   flutter_svg: ^2.0.17
   shimmer: ^3.0.0
   collection: ^1.19.0
+  youtube_player_flutter: ^10.0.1
+  pdf: ^3.13.0
+  printing: ^5.15.0
 
 dev_dependencies:
   flutter_test:

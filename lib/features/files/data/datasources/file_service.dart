@@ -18,6 +18,28 @@ class FileService {
     return response.data;
   }
 
+  /// `POST /files/upload` — hands the bytes over and gets a file record back.
+  ///
+  /// Every endpoint that *uses* a file takes the returned uuid, never the bytes
+  /// again, so what callers actually want from this is [UploadedFile.id].
+  ///
+  /// `isPublic: true` matches what the web sends for assignment attachments; a
+  /// student's upload and a teacher's therefore behave identically when either
+  /// side opens it.
+  Future<UploadedFileModel> upload({
+    required String filePath,
+    required String fileName,
+  }) async {
+    final response = await _client.uploadFile(
+      filePath: filePath,
+      fileName: fileName,
+      isPublic: true,
+      parse: (data) =>
+          UploadedFileModel.fromJson((data as Map<String, dynamic>?) ?? const {}),
+    );
+    return response.data;
+  }
+
   /// `GET /files/:id/presigned-url` — a short-lived URL for a private file.
   ///
   /// This is what makes an attachment openable at all: every `/files/*` route

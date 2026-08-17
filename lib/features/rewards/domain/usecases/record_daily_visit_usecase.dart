@@ -18,3 +18,15 @@ class RecordDailyVisitUseCase implements UseCase<Unit, NoParams> {
   Future<Either<Failure, Unit>> call(NoParams params) =>
       _repository.recordDailyVisit();
 }
+
+/// Spends a Time Travel Ticket to re-open a closed daily challenge.
+class UseTimeTravelTicketUseCase implements UseCase<Unit, IdParams> {
+  const UseTimeTravelTicketUseCase(this._repository);
+
+  final RewardsRepository _repository;
+
+  /// [params].id is the daily set's id.
+  @override
+  Future<Either<Failure, Unit>> call(IdParams params) =>
+      _repository.useTicket(params.id);
+}

@@ -85,6 +85,28 @@ class ResolvedGlass {
 
   Color get pillBorder => tokens.pillBorder;
 
+  /// The nav capsule's selection pill — translucent by design, so that the blurred
+  /// content passing under the capsule tints it too.
+  ///
+  /// Under Reduce Transparency it collapses onto the capsule's own opaque fill —
+  /// that surface, not the card's, is what is actually behind it once the blur is
+  /// gone.
+  ///
+  /// The result is a *faint* fill in the light scheme, because an opaque near-white
+  /// pill on an opaque near-white bar has nowhere to go. That is why
+  /// [navPillBorder] switches to a hairline there rather than a light catch: with
+  /// no translucency left to distinguish the two surfaces, the outline has to. The
+  /// selected tab is in any case carried by the accent-coloured glyph, the heavier
+  /// label and the `selected` semantics flag, none of which depend on the pill.
+  Color get navPillTint => reduceTransparency
+      ? Color.alphaBlend(tokens.navPillTint, tokens.navBar.opaqueFill)
+      : tokens.navPillTint;
+
+  /// A white light-catch normally; the solid indicator hairline under Reduce
+  /// Transparency, where it is the only thing outlining the pill.
+  Color get navPillBorder =>
+      reduceTransparency ? tokens.pillBorder : tokens.navPillBorder;
+
   // ── Blur, accessibility-resolved ───────────────────────────────────────────
 
   /// Sigma for a named blur level — always 0 under Reduce Transparency, which is

@@ -16,6 +16,13 @@ class FileRepositoryImpl with RepositoryGuard implements FileRepository {
       guard(() => _service.getFile(fileId));
 
   @override
+  Future<Either<Failure, UploadedFile>> upload({
+    required String filePath,
+    required String fileName,
+  }) =>
+      guard(() => _service.upload(filePath: filePath, fileName: fileName));
+
+  @override
   Future<Either<Failure, String>> resolveOpenUrl(UploadedFile file) =>
       guard(() async {
         // A public object is served straight from the bucket, so the extra

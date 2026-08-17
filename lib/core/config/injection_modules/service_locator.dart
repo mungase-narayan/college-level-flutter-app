@@ -14,6 +14,10 @@ import '../../../features/courses/data/repositories/course_repository_impl.dart'
 import '../../../features/courses/domain/repositories/course_repository.dart';
 import '../../../features/courses/domain/usecases/course_usecases.dart';
 import '../../../features/courses/domain/usecases/material_comment_usecases.dart';
+import '../../../features/discussions/data/datasources/discussion_service.dart';
+import '../../../features/discussions/data/repositories/discussion_repository_impl.dart';
+import '../../../features/discussions/domain/repositories/discussion_repository.dart';
+import '../../../features/discussions/domain/usecases/discussion_usecases.dart';
 import '../../../features/files/data/datasources/file_service.dart';
 import '../../../features/files/data/repositories/file_repository_impl.dart';
 import '../../../features/files/domain/repositories/file_repository.dart';
@@ -35,6 +39,10 @@ import '../../../features/attendance/data/datasources/attendance_service.dart';
 import '../../../features/attendance/data/repositories/attendance_repository_impl.dart';
 import '../../../features/attendance/domain/repositories/attendance_repository.dart';
 import '../../../features/attendance/domain/usecases/attendance_usecases.dart';
+import '../../../features/calendar/data/datasources/calendar_service.dart';
+import '../../../features/calendar/data/repositories/calendar_repository_impl.dart';
+import '../../../features/calendar/domain/repositories/calendar_repository.dart';
+import '../../../features/calendar/domain/usecases/calendar_usecases.dart';
 import '../../../features/analytics/data/repositories/analytics_repository_impl.dart';
 import '../../../features/analytics/domain/repositories/analytics_repository.dart';
 import '../../../features/analytics/domain/usecases/analytics_usecases.dart';
@@ -73,8 +81,25 @@ Future<void> initServiceLocator() async {
   _initLeaderboard();
   _initAssessments();
   _initAttendance();
+  _initCalendar();
   _initFiles();
   _initNotes();
+  _initDiscussions();
+}
+
+/// Practice-question discussions. These endpoints sit under `/practice` rather
+/// than `/student`: the thread is visible to any signed-in role.
+void _initDiscussions() {
+  sl
+    ..registerLazySingleton<DiscussionService>(() => DiscussionService(sl()))
+    ..registerLazySingleton<DiscussionRepository>(
+      () => DiscussionRepositoryImpl(sl()),
+    )
+    ..registerLazySingleton(() => ListDiscussionsUseCase(sl()))
+    ..registerLazySingleton(() => PostDiscussionUseCase(sl()))
+    ..registerLazySingleton(() => EditDiscussionUseCase(sl()))
+    ..registerLazySingleton(() => DeleteDiscussionUseCase(sl()))
+    ..registerLazySingleton(() => ReactToDiscussionUseCase(sl()));
 }
 
 /// File metadata and presigned URLs — used by material attachments, and by
@@ -84,6 +109,7 @@ void _initFiles() {
     ..registerLazySingleton<FileService>(() => FileService(sl()))
     ..registerLazySingleton<FileRepository>(() => FileRepositoryImpl(sl()))
     ..registerLazySingleton(() => GetFileUseCase(sl()))
+    ..registerLazySingleton(() => UploadFileUseCase(sl()))
     ..registerLazySingleton(() => ResolveFileUrlUseCase(sl()));
 }
 
@@ -104,6 +130,7 @@ void _initAssessments() {
       () => AssessmentRepositoryImpl(sl()),
     )
     ..registerLazySingleton(() => ListCourseAssessmentsUseCase(sl()))
+    ..registerLazySingleton(() => ListAllAssessmentsUseCase(sl()))
     ..registerLazySingleton(() => GetAssessmentDetailUseCase(sl()))
     ..registerLazySingleton(() => StartAttemptUseCase(sl()))
     ..registerLazySingleton(() => SaveAttemptUseCase(sl()))
@@ -118,6 +145,16 @@ void _initAttendance() {
     )
     ..registerLazySingleton(() => GetCourseAttendanceUseCase(sl()))
     ..registerLazySingleton(() => ListAttendanceSessionsUseCase(sl()));
+}
+
+/// The combined timetable-and-events calendar.
+void _initCalendar() {
+  sl
+    ..registerLazySingleton<CalendarService>(() => CalendarService(sl()))
+    ..registerLazySingleton<CalendarRepository>(
+      () => CalendarRepositoryImpl(sl()),
+    )
+    ..registerLazySingleton(() => GetCalendarUseCase(sl()));
 }
 
 void _initAnalytics() {
@@ -153,7 +190,8 @@ void _initRewards() {
   sl
     ..registerLazySingleton<RewardsService>(() => RewardsService(sl()))
     ..registerLazySingleton<RewardsRepository>(() => RewardsRepositoryImpl(sl()))
-    ..registerLazySingleton(() => RecordDailyVisitUseCase(sl()));
+    ..registerLazySingleton(() => RecordDailyVisitUseCase(sl()))
+    ..registerLazySingleton(() => UseTimeTravelTicketUseCase(sl()));
 }
 
 Future<void> _initCore() async {
@@ -221,9 +259,18 @@ void _initPractice() {
     ..registerLazySingleton<PracticeRepository>(() => PracticeRepositoryImpl(sl()))
     ..registerLazySingleton(() => ListPracticeQuestionsUseCase(sl()))
     ..registerLazySingleton(() => GetPracticeQuestionUseCase(sl()))
+    ..registerLazySingleton(() => GetPracticeAttemptsUseCase(sl()))
+    ..registerLazySingleton(() => NavigatePracticeUseCase(sl()))
+    ..registerLazySingleton(() => RunPracticeCodeUseCase(sl()))
+    ..registerLazySingleton(() => RunPracticeCustomUseCase(sl()))
+    ..registerLazySingleton(() => SubmitPracticeUseCase(sl()))
+    ..registerLazySingleton(() => GetPracticeFiltersUseCase(sl()))
     ..registerLazySingleton(() => GetPracticeSummaryUseCase(sl()))
     ..registerLazySingleton(() => GetPracticeAnalyticsUseCase(sl()))
     ..registerLazySingleton(() => GetDailyChallengeUseCase(sl()))
     ..registerLazySingleton(() => GetDailyChallengeHistoryUseCase(sl()))
+    ..registerLazySingleton(() => GetDailyChallengeByDateUseCase(sl()))
+    ..registerLazySingleton(() => GetDailyCalendarUseCase(sl()))
+    ..registerLazySingleton(() => SubmitDailyChallengeUseCase(sl()))
     ..registerLazySingleton(() => SetBookmarkedUseCase(sl()));
 }

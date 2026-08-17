@@ -79,6 +79,9 @@ class Fmt {
     return longDate(iso);
   }
 
+  /// `August 2026` — the heading over a month grid.
+  static String monthYear(DateTime date) => DateFormat('MMMM yyyy').format(date);
+
   /// The `YYYY-MM-DD` key the daily-challenge endpoints expect.
   static String isoDate(DateTime date) => DateFormat('yyyy-MM-dd').format(date);
 

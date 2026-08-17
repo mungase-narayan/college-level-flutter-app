@@ -112,6 +112,10 @@ class RatingTier {
       all.firstWhere((tier) => rating >= tier.from, orElse: () => all.last);
 
   /// Parses `#rrggbb`; null when absent or malformed.
+  ///
+  /// Deliberately not delegating to `parseHexColor` in the theme module: this
+  /// is a domain entity, and the presentation layer's colour helpers are not
+  /// something the domain should have to import.
   static Color? parseHex(String? hex) {
     if (hex == null) return null;
     final cleaned = hex.replaceFirst('#', '').trim();

@@ -7,6 +7,7 @@ import '../../../../core/common/widgets/widgets.dart';
 import '../../../../core/config/theme/app_colors.dart';
 import '../../../../core/config/theme/app_theme.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../files/presentation/widgets/attachment_tile.dart';
 import '../../domain/entities/assessment_detail.dart';
 import '../../domain/entities/student_assessment.dart';
 import '../bloc/assessment_detail_cubit.dart';
@@ -136,6 +137,25 @@ class _AttemptIntroState extends State<AttemptIntro> {
           ),
           const SizedBox(height: 12),
 
+          // The question paper, above marks and dates: it is the first thing a
+          // student needs, and this screen also serves a window that has closed
+          // — so the brief stays readable even once the chance to hand in has
+          // gone.
+          if (assessment.fileIds.isNotEmpty) ...[
+            AppSectionCard(
+              title: 'Brief',
+              icon: Icons.attach_file_rounded,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final fileId in assessment.fileIds)
+                    AttachmentTile(fileId: fileId),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+
           _MetaGrid(
             items: [
               _MetaItem(
@@ -203,7 +223,11 @@ class _AttemptIntroState extends State<AttemptIntro> {
           Text(
             blocked
                 ? 'You cannot start this ${widget.kind.toLowerCase()} right now.'
-                : 'Your answers save automatically as you go.',
+                // A submission-type assessment has neither answers nor an
+                // autosave — its draft is saved when the student asks.
+                : assessment.type == 'questions'
+                    ? 'Your answers save automatically as you go.'
+                    : 'Draft your response and submit when you are ready.',
             style: theme.textTheme.labelSmall?.copyWith(color: scheme.mutedForeground),
             textAlign: TextAlign.center,
           ),

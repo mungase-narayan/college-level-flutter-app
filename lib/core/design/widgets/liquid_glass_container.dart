@@ -50,6 +50,7 @@ class LiquidGlassContainer extends StatelessWidget {
     this.constraints,
     this.clipBehavior = Clip.antiAlias,
     this.refract = false,
+    this.saturation = 1.0,
   });
 
   final Widget child;
@@ -95,6 +96,15 @@ class LiquidGlassContainer extends StatelessWidget {
   /// content surfaces do not opt in. Degrades to a plain blur wherever
   /// `ImageFilter.shader` is unavailable.
   final bool refract;
+
+  /// Saturation boost applied to the blurred backdrop, 1.0 for none.
+  ///
+  /// Opt-in per surface rather than baked into the blur: it exists to keep colour
+  /// bleeding through a *small* surface that content passes under — the nav
+  /// capsule — and on a full-width bar the same boost would tint the whole header
+  /// from whatever happens to be under one end of it. Ignored when there is no real
+  /// blur, since there is nothing to compensate for then.
+  final double saturation;
 
   @override
   Widget build(BuildContext context) {
@@ -153,13 +163,18 @@ class LiquidGlassContainer extends StatelessWidget {
                       sigma: sigma,
                       radius: shape.topLeft.x,
                       size: constraints.biggest,
+                      saturation: saturation,
                     ) ??
                     ui.ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
                 child: DecoratedBox(decoration: fill),
               ),
             )
           : BackdropFilter(
-              filter: ui.ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
+              filter: GlassRefraction.saturate(
+                    ui.ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
+                    saturation,
+                  ) ??
+                  ui.ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
               child: backdrop,
             );
     }

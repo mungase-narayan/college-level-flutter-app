@@ -257,6 +257,7 @@ class AttemptSubmission extends Equatable {
     this.isLate = false,
     this.violationCount = 0,
     this.autoSubmitted = false,
+    this.fileIds = const [],
   });
 
   final String id;
@@ -274,7 +275,11 @@ class AttemptSubmission extends Equatable {
   final int violationCount;
   final bool autoSubmitted;
 
+  /// Files the student handed in. Seeds the attachment list when a draft is
+  /// resumed, and is what the review screen lists.
+  final List<String> fileIds;
+
   @override
   List<Object?> get props =>
-      [id, status, attempt, totalScore, maxScore, submittedAt];
+      [id, status, attempt, totalScore, maxScore, submittedAt, note, fileIds];
 }

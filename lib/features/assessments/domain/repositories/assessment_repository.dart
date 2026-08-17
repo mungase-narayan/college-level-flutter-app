@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 
 import '../../../../core/error/failures.dart';
+import '../../../../core/network/api_response.dart';
 import '../entities/assessment_detail.dart';
 import '../entities/student_assessment.dart';
 
@@ -10,6 +11,17 @@ abstract class AssessmentRepository {
     required String courseId,
     String? category,
     String? courseMaterialId,
+  });
+
+  /// The same rows across every enrolled course, paginated and filtered by the
+  /// server. Powers the standalone Quizzes screen.
+  Future<Either<Failure, Paginated<StudentAssessment>>> listAll({
+    String? category,
+    String? courseId,
+    String? status,
+    String? search,
+    int page,
+    int limit,
   });
 
   Future<Either<Failure, AssessmentDetail>> getDetail(String assessmentId);

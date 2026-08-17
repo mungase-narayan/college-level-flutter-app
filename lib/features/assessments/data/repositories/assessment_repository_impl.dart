@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/guard.dart';
+import '../../../../core/network/api_response.dart';
 import '../../domain/entities/assessment_detail.dart';
 import '../../domain/entities/student_assessment.dart';
 import '../../domain/repositories/assessment_repository.dart';
@@ -25,6 +26,26 @@ class AssessmentRepositoryImpl
           courseId: courseId,
           category: category,
           courseMaterialId: courseMaterialId,
+        ),
+      );
+
+  @override
+  Future<Either<Failure, Paginated<StudentAssessment>>> listAll({
+    String? category,
+    String? courseId,
+    String? status,
+    String? search,
+    int page = 1,
+    int limit = 20,
+  }) =>
+      guard(
+        () => _service.listAll(
+          category: category,
+          courseId: courseId,
+          status: status,
+          search: search,
+          page: page,
+          limit: limit,
         ),
       );
 

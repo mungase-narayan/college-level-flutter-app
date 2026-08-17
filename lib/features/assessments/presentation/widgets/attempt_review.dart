@@ -4,6 +4,7 @@ import '../../../../core/common/widgets/widgets.dart';
 import '../../../../core/config/theme/app_colors.dart';
 import '../../../../core/config/theme/app_theme.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../files/presentation/widgets/attachment_tile.dart';
 import '../../domain/entities/assessment_detail.dart';
 import '../../domain/entities/student_assessment.dart';
 
@@ -130,12 +131,31 @@ class AttemptReview extends StatelessWidget {
                 resultsPublished: published,
               ),
             ),
-        ] else if ((submission?.note ?? '').isNotEmpty) ...[
+        ] else if ((submission?.note ?? '').isNotEmpty ||
+            (submission?.fileIds.isNotEmpty ?? false)) ...[
+          // Files count as a submission on their own: gating this block on the
+          // note alone made a hand-in of nothing but attachments look like a
+          // blank page.
           const SizedBox(height: 18),
           AppSectionCard(
             title: 'Your submission',
             icon: Icons.description_outlined,
-            child: Text(submission!.note!, style: theme.textTheme.bodyMedium),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if ((submission!.note ?? '').isNotEmpty)
+                  Text(submission.note!, style: theme.textTheme.bodyMedium),
+                if (submission.fileIds.isNotEmpty) ...[
+                  if ((submission.note ?? '').isNotEmpty)
+                    const SizedBox(height: 12),
+                  Text('Attachments', style: theme.textTheme.labelMedium),
+                  const SizedBox(height: 8),
+                  // Read-only: a submitted attempt cannot be edited.
+                  for (final fileId in submission.fileIds)
+                    AttachmentTile(fileId: fileId),
+                ],
+              ],
+            ),
           ),
         ],
       ],

@@ -5,4 +5,7 @@ import '../../../../core/error/failures.dart';
 abstract class RewardsRepository {
   /// Records the once-per-day visit that awards +1 point.
   Future<Either<Failure, Unit>> recordDailyVisit();
+
+  /// Spends a Time Travel Ticket on a closed daily-challenge set.
+  Future<Either<Failure, Unit>> useTicket(String setId);
 }

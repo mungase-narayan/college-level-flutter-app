@@ -22,6 +22,9 @@ class StudentAssessmentModel extends StudentAssessment {
     super.isProctored,
     super.durationMinutes,
     super.submission,
+    super.course,
+    super.creator,
+    super.fileIds,
   });
 
   factory StudentAssessmentModel.fromJson(Map<String, dynamic> json) =>
@@ -49,8 +52,35 @@ class StudentAssessmentModel extends StudentAssessment {
                 json['submission'] as Map<String, dynamic>,
               )
             : null,
+        // Both are sent only by `/student/assignments/all`; a per-course row
+        // simply has no such keys, so they stay null there.
+        course: json['course'] is Map<String, dynamic>
+            ? _courseRef(json['course'] as Map<String, dynamic>)
+            : null,
+        creator: json['creator'] is Map<String, dynamic>
+            ? _creatorRef(json['creator'] as Map<String, dynamic>)
+            : null,
+        fileIds: _strings(json['fileIds']),
       );
 }
+
+/// The API sends `null` rather than `[]` for an assessment with no attachments.
+List<String> _strings(Object? value) =>
+    (value as List?)?.whereType<String>().toList(growable: false) ??
+    const <String>[];
+
+AssessmentCourseRef _courseRef(Map<String, dynamic> json) => AssessmentCourseRef(
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+      code: json['code'] as String? ?? '',
+      colorCode: json['colorCode'] as String?,
+    );
+
+AssessmentCreatorRef _creatorRef(Map<String, dynamic> json) =>
+    AssessmentCreatorRef(
+      name: json['name'] as String? ?? '',
+      avatar: json['avatar'] as String?,
+    );
 
 class AssessmentSubmissionModel extends AssessmentSubmission {
   const AssessmentSubmissionModel({

@@ -1,27 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:re_highlight/languages/bash.dart';
-import 'package:re_highlight/languages/c.dart';
-import 'package:re_highlight/languages/cpp.dart';
-import 'package:re_highlight/languages/csharp.dart';
-import 'package:re_highlight/languages/css.dart';
-import 'package:re_highlight/languages/dart.dart';
-import 'package:re_highlight/languages/go.dart';
-import 'package:re_highlight/languages/java.dart';
-import 'package:re_highlight/languages/javascript.dart';
-import 'package:re_highlight/languages/json.dart';
-import 'package:re_highlight/languages/kotlin.dart';
-import 'package:re_highlight/languages/markdown.dart';
-import 'package:re_highlight/languages/php.dart';
-import 'package:re_highlight/languages/python.dart';
-import 'package:re_highlight/languages/ruby.dart';
-import 'package:re_highlight/languages/rust.dart';
-import 'package:re_highlight/languages/sql.dart';
-import 'package:re_highlight/languages/swift.dart';
-import 'package:re_highlight/languages/typescript.dart';
-import 'package:re_highlight/languages/xml.dart';
-import 'package:re_highlight/languages/yaml.dart';
 import 'package:re_highlight/re_highlight.dart';
+
+import 'code_languages.dart';
 import 'package:re_highlight/styles/atom-one-dark.dart';
 import 'package:re_highlight/styles/atom-one-light.dart';
 
@@ -42,55 +23,6 @@ class MarkdownCodeBlock extends StatefulWidget {
   @override
   State<MarkdownCodeBlock> createState() => _MarkdownCodeBlockState();
 }
-
-/// Highlighting the whole of `all.dart` would pull 197 grammars into the
-/// bundle. These are the languages course content realistically uses; anything
-/// else renders unhighlighted, which is what Prism does for an unknown tag too.
-final Map<String, Mode> _languages = {
-  'bash': langBash,
-  'sh': langBash,
-  'shell': langBash,
-  'zsh': langBash,
-  'c': langC,
-  'cpp': langCpp,
-  'c++': langCpp,
-  'cs': langCsharp,
-  'csharp': langCsharp,
-  'css': langCss,
-  'dart': langDart,
-  'go': langGo,
-  'html': langXml,
-  'java': langJava,
-  'javascript': langJavascript,
-  'js': langJavascript,
-  'json': langJson,
-  'kotlin': langKotlin,
-  'kt': langKotlin,
-  'markdown': langMarkdown,
-  'md': langMarkdown,
-  'php': langPhp,
-  'py': langPython,
-  'python': langPython,
-  'rb': langRuby,
-  'ruby': langRuby,
-  'rs': langRust,
-  'rust': langRust,
-  'sql': langSql,
-  'swift': langSwift,
-  'ts': langTypescript,
-  'typescript': langTypescript,
-  'xml': langXml,
-  'yaml': langYaml,
-  'yml': langYaml,
-};
-
-/// One shared engine — registering the grammars per widget would re-compile
-/// every mode on each build.
-final Highlight _highlight = () {
-  final engine = Highlight();
-  engine.registerLanguages(_languages);
-  return engine;
-}();
 
 class _MarkdownCodeBlockState extends State<MarkdownCodeBlock> {
   bool _copied = false;
@@ -180,12 +112,12 @@ class _MarkdownCodeBlockState extends State<MarkdownCodeBlock> {
   /// code as a single plain span rather than failing.
   TextSpan _span(TextStyle base, bool isDark) {
     final language = (widget.language ?? '').toLowerCase();
-    if (!_languages.containsKey(language)) {
+    if (!hasHighlighting(language)) {
       return TextSpan(text: widget.code, style: base);
     }
 
     try {
-      final result = _highlight.highlight(code: widget.code, language: language);
+      final result = codeHighlight.highlight(code: widget.code, language: language);
       final renderer = TextSpanRenderer(
         base,
         // The themes carry their own `root` background; the surface here is the

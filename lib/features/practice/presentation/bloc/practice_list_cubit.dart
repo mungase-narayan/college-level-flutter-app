@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/common/bloc/remote_cubit.dart';
 import '../../../../core/network/api_response.dart';
+import '../../../../core/usecases/usecase.dart';
 import '../../domain/entities/practice_question.dart';
 import '../../domain/usecases/practice_usecases.dart';
 
@@ -12,12 +13,17 @@ class PracticeListCubit extends Cubit<RemoteState<Paginated<PracticeQuestionList
   PracticeListCubit({
     required ListPracticeQuestionsUseCase listQuestions,
     required SetBookmarkedUseCase setBookmarked,
+    required GetPracticeFiltersUseCase getFilters,
   })  : _listQuestions = listQuestions,
         _setBookmarked = setBookmarked,
+        _getFilters = getFilters,
         super(const RemoteState());
 
   final ListPracticeQuestionsUseCase _listQuestions;
   final SetBookmarkedUseCase _setBookmarked;
+  final GetPracticeFiltersUseCase _getFilters;
+
+  List<PracticeSubject>? _courses;
 
   PracticeQueryParams _query = const PracticeQueryParams();
   bool _isLoadingMore = false;
@@ -105,11 +111,33 @@ class PracticeListCubit extends Cubit<RemoteState<Paginated<PracticeQuestionList
     return load();
   }
 
-  /// Applies sort, attempt status and difficulty together in one reload.
+  /// The Course options, fetched once on first use.
   ///
-  /// The filter sheet stages all three and commits on Apply. Calling the individual
-  /// setters in sequence would fire three requests and paint two throwaway result
-  /// sets before landing on the one the user asked for.
+  /// Lazy for the same reason the quiz screen's are: the sheet is what needs
+  /// them, and most visits never open it.
+  Future<List<PracticeSubject>> courseOptions() async {
+    final cached = _courses;
+    if (cached != null) return cached;
+
+    final result = await _getFilters(const NoParams());
+    if (isClosed) return const [];
+
+    return result.fold(
+      // A filter that will not load is not worth an error banner over the
+      // list; the other filters still work.
+      (_) => const [],
+      (options) {
+        _courses = options.subjects;
+        return options.subjects;
+      },
+    );
+  }
+
+  /// Applies every filter the sheet owns in one reload.
+  ///
+  /// The sheet stages them all and commits on Apply. Calling the individual
+  /// setters in sequence would fire one request each and paint several
+  /// throwaway result sets before landing on the one the user asked for.
   ///
   /// Nulls mean "no filter", so this cannot express "leave unchanged" — the sheet
   /// always submits the complete set, which is what makes that unambiguous.
@@ -117,13 +145,24 @@ class PracticeListCubit extends Cubit<RemoteState<Paginated<PracticeQuestionList
     required String sort,
     String? attemptStatus,
     String? difficulty,
+    String? type,
+    String? courseId,
+    bool bookmarked = false,
   }) {
     _query = _query.copyWith(
       sort: sort,
       attemptStatus: attemptStatus,
       difficulty: difficulty,
+      type: type,
+      courseId: courseId,
+      // `false` and "no filter" are the same thing here: the endpoint has no
+      // "not bookmarked" mode, and the web never sends one either.
+      bookmarked: bookmarked ? true : null,
       clearAttemptStatus: attemptStatus == null,
       clearDifficulty: difficulty == null,
+      clearType: type == null,
+      clearCourse: courseId == null,
+      clearBookmarked: !bookmarked,
     );
     return load();
   }

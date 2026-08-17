@@ -6,7 +6,13 @@ plugins {
 
 android {
     namespace = "com.example.college_level"
-    compileSdk = flutter.compileSdkVersion
+    // Pinned rather than `flutter.compileSdkVersion` (34): `file_picker` pulls in
+    // `flutter_plugin_android_lifecycle`, whose AAR metadata demands API 36 or
+    // later, so the Android build fails outright at `checkDebugAarMetadata`
+    // without this. Compiling against a newer SDK only widens which APIs are
+    // available — `minSdk` and `targetSdk` are untouched, so neither the
+    // supported device range nor the runtime behaviour changes.
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

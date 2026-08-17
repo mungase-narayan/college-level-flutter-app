@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/common/bloc/remote_cubit.dart';
 import '../../../../core/common/widgets/widgets.dart';
+import '../../../../core/config/theme/app_colors.dart';
 import '../../../../core/config/theme/app_theme.dart';
 import '../../../../core/design/extensions/glass_context.dart';
 import '../../../shell/presentation/pages/student_shell.dart';
@@ -196,11 +197,5 @@ class _CourseCard extends StatelessWidget {
   }
 
   /// Parses `#rrggbb` from `colorCode`; null when unset or malformed.
-  Color? _colorOf(String? hex) {
-    if (hex == null) return null;
-    final cleaned = hex.replaceFirst('#', '').trim();
-    if (cleaned.length != 6) return null;
-    final value = int.tryParse(cleaned, radix: 16);
-    return value == null ? null : Color(0xFF000000 | value);
-  }
+  Color? _colorOf(String? hex) => parseHexColor(hex);
 }

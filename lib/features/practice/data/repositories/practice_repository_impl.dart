@@ -4,6 +4,7 @@ import '../../../../core/error/failures.dart';
 import '../../../../core/error/guard.dart';
 import '../../../../core/network/api_response.dart';
 import '../../domain/entities/daily_challenge.dart';
+import '../../domain/entities/practice_attempt.dart';
 import '../../domain/entities/practice_question.dart';
 import '../../domain/entities/practice_summary.dart';
 import '../../domain/repositories/practice_repository.dart';
@@ -49,6 +50,66 @@ class PracticeRepositoryImpl with RepositoryGuard implements PracticeRepository 
       guard(() => _service.getQuestion(id));
 
   @override
+  Future<Either<Failure, PracticeAttemptHistory>> listAttempts(String id) =>
+      guard(() => _service.listAttempts(id));
+
+  @override
+  Future<Either<Failure, String?>> navigate(String id, {String mode = 'next'}) =>
+      guard(() => _service.navigate(id, mode: mode));
+
+  @override
+  Future<Either<Failure, PracticeCodingResult>> run({
+    required String id,
+    required String code,
+    required String language,
+  }) =>
+      guard(() => _service.run(id: id, code: code, language: language));
+
+  @override
+  Future<Either<Failure, PracticeCustomRunResult>> runCustom({
+    required String id,
+    required String code,
+    required String language,
+    String? stdin,
+  }) =>
+      guard(
+        () => _service.runCustom(
+          id: id,
+          code: code,
+          language: language,
+          stdin: stdin,
+        ),
+      );
+
+  @override
+  Future<Either<Failure, PracticeSubmitResult>> submit({
+    required String id,
+    List<String>? selectedAnswers,
+    String? answerText,
+    List<String>? attachments,
+    String? code,
+    String? language,
+    String? studentNote,
+    int? timeTakenSec,
+  }) =>
+      guard(
+        () => _service.submit(
+          id: id,
+          selectedAnswers: selectedAnswers,
+          answerText: answerText,
+          attachments: attachments,
+          code: code,
+          language: language,
+          studentNote: studentNote,
+          timeTakenSec: timeTakenSec,
+        ),
+      );
+
+  @override
+  Future<Either<Failure, PracticeFilterOptions>> getFilters() =>
+      guard(() => _service.getFilters());
+
+  @override
   Future<Either<Failure, PracticeSummary>> getSummary() =>
       guard(() => _service.getSummary());
 
@@ -65,6 +126,42 @@ class PracticeRepositoryImpl with RepositoryGuard implements PracticeRepository 
     int limit = 14,
   }) =>
       guard(() => _service.getDailyChallengeHistory(limit: limit));
+
+  @override
+  Future<Either<Failure, DailyChallenge>> getDailyChallengeByDate(String date) =>
+      guard(() => _service.getDailyChallengeByDate(date));
+
+  @override
+  Future<Either<Failure, DailyCalendar>> getDailyChallengeCalendar({
+    String? month,
+  }) =>
+      guard(() => _service.getDailyChallengeCalendar(month: month));
+
+  @override
+  Future<Either<Failure, DailyChallengeSubmitResult>> submitDailyChallenge({
+    required String setId,
+    required String questionId,
+    List<String>? selectedAnswers,
+    String? answerText,
+    List<String>? attachments,
+    String? code,
+    String? language,
+    String? studentNote,
+    int? timeTakenSec,
+  }) =>
+      guard(
+        () => _service.submitDailyChallenge(
+          setId: setId,
+          questionId: questionId,
+          selectedAnswers: selectedAnswers,
+          answerText: answerText,
+          attachments: attachments,
+          code: code,
+          language: language,
+          studentNote: studentNote,
+          timeTakenSec: timeTakenSec,
+        ),
+      );
 
   @override
   Future<Either<Failure, Unit>> setBookmarked({

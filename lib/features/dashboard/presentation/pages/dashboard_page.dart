@@ -15,6 +15,7 @@ import '../../../shell/presentation/pages/student_shell.dart';
 import '../../../shell/presentation/widgets/student_nav.dart';
 import '../../../practice/domain/entities/daily_challenge.dart';
 import '../bloc/dashboard_cubit.dart';
+import '../widgets/today_sessions_card.dart';
 import '../widgets/practice_analytics_section.dart';
 
 /// Port of `src/pages/student/index.tsx` — the student dashboard.
@@ -58,6 +59,12 @@ class _DashboardPageState extends State<DashboardPage> {
                   _WelcomeHeader(name: auth.user?.displayName),
                   const SizedBox(height: 14),
                   _DailyChallengeCard(challenge: data.dailyChallenge),
+                  const SizedBox(height: 12),
+
+                  // Port of `TodaySessionsCard`. On the web this is the
+                  // dashboard's right-hand column, alongside the challenge;
+                  // stacked, that puts it here.
+                  const TodaySessionsCard(),
                   const SizedBox(height: 12),
 
                   // Port of `DashboardHighlights` — rank and badges.
@@ -465,7 +472,10 @@ class _DailyChallengeCard extends StatelessWidget {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(999),
                     child: LinearProgressIndicator(
-                      value: completion.fraction,
+                      // Attempted, not solved — the same measure as the "Done"
+                      // badge above it, which the server sets once every
+                      // question has been answered.
+                      value: completion.attemptedFraction,
                       minHeight: 6,
                       backgroundColor: scheme.muted,
                     ),
@@ -473,7 +483,7 @@ class _DailyChallengeCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 Text(
-                  '${completion.solvedCount}/${completion.totalQuestions}',
+                  '${completion.attemptedCount}/${completion.totalQuestions}',
                   style: theme.textTheme.labelMedium,
                 ),
               ],

@@ -161,23 +161,82 @@ abstract final class GlassSpacing {
 /// so cannot read the shell's geometry.
 abstract final class GlassMetrics {
   /// Height of the floating navigation capsule.
-  static const navBarHeight = 58.0;
+  ///
+  /// Sized from its contents rather than picked: a 24pt glyph, a 4pt gap and a
+  /// 13pt label line come to 41pt, and the selection pill needs [navBarPillInset]
+  /// above and below that to read as a pill inside the capsule rather than as a
+  /// second bar filling it.
+  ///
+  /// Every rounded shape here follows from this one number, because both the
+  /// capsule and the pill are fully rounded: the capsule's radius is `height / 2`
+  /// (33) and the pill's is that less its inset (27). Growing the bar past ~70pt
+  /// does *not* scale the design — the content stack stays 41pt tall, so the extra
+  /// height lands inside the pill as dead air and the lozenge reads as bloated.
+  static const navBarHeight = 66.0;
 
   /// Horizontal inset of the capsule from the screen edges.
-  static const navBarSideMargin = 16.0;
+  ///
+  /// A floating iOS tab bar sits visibly inboard of the screen edges — the gap is
+  /// what says "this is an object above the content" rather than a docked strip.
+  /// This constant is the whole width control: the capsule is
+  /// `screen − 2 × margin`, so 18pt puts it at ~91% of the screen on any iPhone.
+  ///
+  /// Widening it widens every slot with it, so the selection pill gets more room
+  /// to grow into and the labels more space between them, without either of those
+  /// being touched here.
+  static const navBarSideMargin = 18.0;
 
   /// Clearance between the capsule's bottom edge and the physical screen edge.
   ///
   /// Deliberately **not** the full `viewPadding.bottom`. That reserve is 34pt on a
   /// home-indicator device, but the indicator itself is only a ~5pt line sitting
   /// ~8pt up — so stacking a gap on top of the whole safe area parked the capsule
-  /// 44pt off the edge and left a conspicuous empty band beneath it. 16pt clears
-  /// the indicator comfortably while keeping the capsule where a floating iOS bar
+  /// 44pt off the edge and left a conspicuous empty band beneath it.
+  ///
+  /// 16pt is measured against the indicator rather than the safe area: it clears
+  /// the top of that line, while keeping the capsule where a floating iOS bar
   /// actually sits.
   ///
   /// Device-independent by design: on a home-button device (`viewPadding.bottom`
   /// of 0) 16pt from the edge is equally correct, so no branch is needed.
   static const navBarBottomInset = 16.0;
+
+  /// Inset of the selection pill from the capsule's own edges.
+  ///
+  /// Equal on all four sides, which is what makes the pill *concentric* with the
+  /// capsule: both are fully-rounded, so the inner radius comes out at
+  /// `navBarHeight / 2 - navBarPillInset` on its own and the gap to the rim stays
+  /// constant all the way around the curve.
+  ///
+  /// A tighter *horizontal* inset is the trap here. It looks correct in the middle
+  /// slots and fails at the two ends, where the capsule's own corner curves away
+  /// from a pill that is still travelling straight — the first and last tabs then
+  /// read as a blob bursting out of the bar rather than a pill sitting in it.
+  /// Shrinking this value is safe in a way that shrinking one axis is not, because
+  /// it keeps the two shapes concentric.
+  ///
+  /// 4 rather than 6: at the end slots the leftover space forms a visible crescent
+  /// between the pill's cap and the capsule's, and 6pt of it read as the pill
+  /// floating adrift of the bar rather than nested in it. The crescent is inherent
+  /// to one rounded end inside another; the only lever on how big it looks is this.
+  static const navBarPillInset = 4.0;
+
+  /// Glyph size in the capsule. iOS tab icons do not change size on selection —
+  /// the fill of the glyph and the pill behind it carry the state.
+  static const navBarIconSize = 24.0;
+
+  /// Air between the selection pill's ends and the label inside it.
+  ///
+  /// The pill is sized from this plus the label rather than from the slot it sits
+  /// in, so that every destination gets the same breathing space. A slot-width
+  /// pill gives whatever is left over — which across five tabs on a phone came to
+  /// about 7pt around a word like "Courses", tight enough that the lozenge looked
+  /// clamped onto the text.
+  static const navBarPillPadding = 14.0;
+
+  /// Floor for the pill's width, so a two-letter label still gets a lozenge rather
+  /// than a circle around its glyph.
+  static const navBarPillMinWidth = 52.0;
 
   /// Vertical space a scroll view must reserve so its last item clears the
   /// capsule: the capsule's own footprint plus a breathing gap.
@@ -191,16 +250,35 @@ abstract final class GlassMetrics {
   /// Blur sigma for the floating nav capsule, at rest and once content has
   /// scrolled beneath it.
   ///
-  /// Deliberately far heavier than the app bar's 24→38. The two surfaces have
-  /// opposite problems: the app bar spans the full width and needs its tint to
-  /// carry legibility, whereas the capsule is a small surface with content passing
-  /// directly under it — and the whole point of it is that you can *see* that
-  /// content. A strong blur smears whatever is behind into a flat wash, which is
-  /// what lets the tint stay translucent without the labels losing contrast.
+  /// Deliberately **lighter** than the app bar's 24→38, which is the opposite of
+  /// where this started (60→68).
+  ///
+  /// The two surfaces are not the same problem. The app bar spans the full width
+  /// and sits under the status bar, so it can afford to obliterate what passes
+  /// beneath it. The capsule is a small object floating over the page, and the only
+  /// thing that makes it read as *glass* rather than as a white slab with rounded
+  /// ends is that you can see what it is on top of. Every increase in sigma trades
+  /// that away: at 60 a card, a book cover and an empty background all render
+  /// identically underneath it.
+  ///
+  /// 14 keeps shapes behind clearly recognisable — colour, position and outline all
+  /// survive — while detail and text go soft. Roughly a 28px CSS blur.
   ///
   /// Zeroed entirely under Reduce Transparency, like every other sigma.
-  static const navBarBlurSigma = 60.0;
-  static const navBarBlurSigmaScrolled = 68.0;
+  static const navBarBlurSigma = 14.0;
+  static const navBarBlurSigmaScrolled = 20.0;
+
+  /// Saturation multiplier applied to the capsule's blurred backdrop.
+  ///
+  /// Blurring averages colour toward grey, so a faithful blur of a vivid card comes
+  /// back washed out. iOS compensates: its materials saturate what they blur, which
+  /// is why colour bleeds *through* Apple's glass rather than fading under it. Kept
+  /// low — past ~1.3 the bleed stops reading as vibrancy and starts looking like a
+  /// colour cast.
+  ///
+  /// Nav-capsule only. The app bar spans the full width, where the same boost would
+  /// tint the whole header from whatever happened to scroll under its left edge.
+  static const navBarSaturation = 1.18;
 
   /// Edge refraction for chrome, in pixels of inward displacement at the rim.
   ///
@@ -213,7 +291,12 @@ abstract final class GlassMetrics {
   /// Per-channel split at the rim, as a fraction of [chromeRefraction]. This is
   /// the faint colour fringing along the edge of Apple's own glass; past ~0.2 it
   /// stops reading as dispersion and starts reading as a rendering fault.
-  static const chromeDispersion = 0.12;
+  ///
+  /// 0.12 was already past that line in practice: at 18pt of displacement it split
+  /// a card's hairline edge passing under the rim into a ~2px cyan stroke, which on
+  /// a screenshot reads as a stray line rather than as glass. Half that keeps the
+  /// split sub-pixel, where it tints the rim instead of drawing on it.
+  static const chromeDispersion = 0.05;
 
   /// How far in from the edge the lensing reaches, in pixels. Clamped at runtime
   /// to half the surface's shortest side so the two rims cannot overlap.
