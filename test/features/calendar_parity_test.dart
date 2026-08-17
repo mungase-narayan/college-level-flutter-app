@@ -62,6 +62,24 @@ void main() {
     course: const CalendarLabelRef(id: 'c1', name: 'Physics', code: 'PH101'),
   );
 
+  // Straddles the real clock so the card takes its live-tracker branch. Start
+  // is clamped to midnight: a fixed offset back from `now` lands on
+  // *yesterday* just after midnight, and the card drops sessions that do not
+  // start on the day it is showing.
+  final liveStart = now.subtract(const Duration(minutes: 20));
+  final live = CalendarEntry(
+    id: 'slot-3:today',
+    parentId: 'slot-3',
+    source: CalendarSource.timetable,
+    type: CalendarEntryType.lesson,
+    title: 'Engineering Chemistry',
+    start: liveStart.isBefore(today) ? today : liveStart,
+    end: now.add(const Duration(minutes: 20)),
+    room: const CalendarLabelRef(id: 'r2', code: 'A-102'),
+    teacher: const CalendarPersonRef(id: 't2', name: 'Dr Rao'),
+    course: const CalendarLabelRef(id: 'c2', name: 'Chemistry', code: 'CY101'),
+  );
+
   late _MockGetCalendar getCalendar;
 
   setUpAll(() {
@@ -232,6 +250,40 @@ void main() {
         // the phase.
         expect(find.text('Physics'), findsWidgets);
         expect(find.text('PH101 · B-102 · Dr Rao'), findsOneWidget);
+      });
+
+      // The live tracker paints an accent edge down one side. Spelling that as
+      // a non-uniform `Border` under a `borderRadius` throws mid-paint, which
+      // leaves the box tinted but empty — the phase the other fixtures never
+      // reach, so it went unseen. Painting is what this asserts: a finder
+      // alone would pass on a box whose paint threw.
+      testWidgets('a class in progress paints the live tracker',
+          (tester) async {
+        when(() => getCalendar(any())).thenAnswer(
+          (_) async => Right<Failure, List<CalendarEntry>>([live]),
+        );
+
+        await tester.pumpWidget(
+          host(
+            BlocProvider(
+              create: (_) =>
+                  TodaySessionsCubit(getCalendar: getCalendar, today: today),
+              child: const Scaffold(
+                body: SingleChildScrollView(child: TodaySessionsCard()),
+              ),
+            ),
+            glass: glass,
+          ),
+        );
+        // Not `pumpAndSettle`: the pulsing dot animates forever.
+        await tester.pump();
+        await tester.pump();
+
+        expect(find.text('IN PROGRESS'), findsOneWidget);
+        expect(find.text('Chemistry'), findsWidgets);
+        expect(find.textContaining('left'), findsOneWidget);
+        expect(find.byType(LinearProgressIndicator), findsOneWidget);
+        expect(tester.takeException(), isNull);
       });
 
       testWidgets('an empty day shows the no-classes copy', (tester) async {

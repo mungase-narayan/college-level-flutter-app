@@ -29,12 +29,20 @@ import '../../../features/notes/domain/usecases/notes_usecases.dart';
 import '../../../features/practice/data/datasources/practice_service.dart';
 import '../../../features/practice/data/repositories/practice_repository_impl.dart';
 import '../../../features/practice/domain/repositories/practice_repository.dart';
+import '../../../features/academic_calendar/data/datasources/academic_calendar_service.dart';
+import '../../../features/academic_calendar/data/repositories/academic_calendar_repository_impl.dart';
+import '../../../features/academic_calendar/domain/repositories/academic_calendar_repository.dart';
+import '../../../features/academic_calendar/domain/usecases/academic_calendar_usecases.dart';
 import '../../../features/analytics/data/datasources/analytics_service.dart';
 import '../../../features/assessments/data/datasources/assessment_service.dart';
 import '../../../features/assessments/data/repositories/assessment_repository_impl.dart';
 import '../../../features/assessments/domain/repositories/assessment_repository.dart';
 import '../../../features/assessments/domain/usecases/attempt_usecases.dart';
 import '../../../features/assessments/domain/usecases/list_course_assessments_usecase.dart';
+import '../../../features/announcements/data/datasources/announcement_service.dart';
+import '../../../features/announcements/data/repositories/announcement_repository_impl.dart';
+import '../../../features/announcements/domain/repositories/announcement_repository.dart';
+import '../../../features/announcements/domain/usecases/announcement_usecases.dart';
 import '../../../features/attendance/data/datasources/attendance_service.dart';
 import '../../../features/attendance/data/repositories/attendance_repository_impl.dart';
 import '../../../features/attendance/domain/repositories/attendance_repository.dart';
@@ -81,7 +89,9 @@ Future<void> initServiceLocator() async {
   _initLeaderboard();
   _initAssessments();
   _initAttendance();
+  _initAnnouncements();
   _initCalendar();
+  _initAcademicCalendar();
   _initFiles();
   _initNotes();
   _initDiscussions();
@@ -113,14 +123,21 @@ void _initFiles() {
     ..registerLazySingleton(() => ResolveFileUrlUseCase(sl()));
 }
 
-/// Scoped to what the material Notes tab needs — listing the notes linked to a
-/// material and creating one. The notes hub is a later pass.
+/// The notes feed, one note, the write operations and the like toggle.
+///
+/// Comments, sharing and attachment upload are a later pass — their counts
+/// still come back on every row and are rendered.
 void _initNotes() {
   sl
     ..registerLazySingleton<NotesService>(() => NotesService(sl()))
     ..registerLazySingleton<NotesRepository>(() => NotesRepositoryImpl(sl()))
     ..registerLazySingleton(() => ListNotesUseCase(sl()))
-    ..registerLazySingleton(() => CreateNoteUseCase(sl()));
+    ..registerLazySingleton(() => GetNoteUseCase(sl()))
+    ..registerLazySingleton(() => CreateNoteUseCase(sl()))
+    ..registerLazySingleton(() => UpdateNoteUseCase(sl()))
+    ..registerLazySingleton(() => DeleteNoteUseCase(sl()))
+    ..registerLazySingleton(() => ToggleNoteLikeUseCase(sl()))
+    ..registerLazySingleton(() => GetMyNotesStatsUseCase(sl()));
 }
 
 void _initAssessments() {
@@ -144,7 +161,36 @@ void _initAttendance() {
       () => AttendanceRepositoryImpl(sl()),
     )
     ..registerLazySingleton(() => GetCourseAttendanceUseCase(sl()))
+    ..registerLazySingleton(() => GetOverallAttendanceUseCase(sl()))
     ..registerLazySingleton(() => ListAttendanceSessionsUseCase(sl()));
+}
+
+/// Campus announcements: the feed, one detail, and event registration.
+void _initAnnouncements() {
+  sl
+    ..registerLazySingleton<AnnouncementService>(() => AnnouncementService(sl()))
+    ..registerLazySingleton<AnnouncementRepository>(
+      () => AnnouncementRepositoryImpl(sl()),
+    )
+    ..registerLazySingleton(() => ListAnnouncementsUseCase(sl()))
+    ..registerLazySingleton(() => GetAnnouncementUseCase(sl()))
+    ..registerLazySingleton(() => RegisterForAnnouncementUseCase(sl()))
+    ..registerLazySingleton(() => CancelAnnouncementRegistrationUseCase(sl()));
+}
+
+/// The semester's published academic calendar — terms, holidays, exams and PL.
+///
+/// A separate feature from [_initCalendar], despite the name: different tables,
+/// date-only entries, and no overlap in vocabulary.
+void _initAcademicCalendar() {
+  sl
+    ..registerLazySingleton<AcademicCalendarService>(
+      () => AcademicCalendarService(sl()),
+    )
+    ..registerLazySingleton<AcademicCalendarRepository>(
+      () => AcademicCalendarRepositoryImpl(sl()),
+    )
+    ..registerLazySingleton(() => GetMyAcademicCalendarUseCase(sl()));
 }
 
 /// The combined timetable-and-events calendar.

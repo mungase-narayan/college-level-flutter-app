@@ -7,6 +7,8 @@ import '../entities/attendance.dart';
 abstract class AttendanceRepository {
   Future<Either<Failure, CourseAttendance>> getCourseAnalytics(String courseId);
 
+  Future<Either<Failure, AttendanceOverview>> getOverallAnalytics();
+
   Future<Either<Failure, Paginated<AttendanceSession>>> listSessions({
     String? courseId,
     String? status,

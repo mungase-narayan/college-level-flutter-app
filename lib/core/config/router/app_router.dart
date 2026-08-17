@@ -17,6 +17,15 @@ import '../../../features/calendar/presentation/bloc/today_sessions_cubit.dart';
 import '../../../features/calendar/presentation/pages/calendar_page.dart';
 import '../../../features/assessments/presentation/pages/assignments_page.dart';
 import '../../../features/assessments/presentation/pages/quizzes_page.dart';
+import '../../../features/academic_calendar/presentation/bloc/academic_calendar_cubit.dart';
+import '../../../features/academic_calendar/presentation/pages/academic_calendar_page.dart';
+import '../../../features/announcements/presentation/bloc/announcement_detail_cubit.dart';
+import '../../../features/announcements/presentation/bloc/announcements_cubit.dart';
+import '../../../features/announcements/presentation/pages/announcement_detail_page.dart';
+import '../../../features/announcements/presentation/pages/announcements_page.dart';
+import '../../../features/attendance/presentation/bloc/attendance_overview_cubit.dart';
+import '../../../features/attendance/presentation/bloc/attendance_sessions_cubit.dart';
+import '../../../features/attendance/presentation/pages/attendance_page.dart';
 import '../../../features/auth/presentation/pages/set_password_page.dart';
 import '../../../features/courses/presentation/bloc/courses_cubit.dart';
 import '../../../features/courses/presentation/pages/course_detail_page.dart';
@@ -26,6 +35,11 @@ import '../../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../../../features/discussions/presentation/bloc/discussion_cubit.dart';
 import '../../../features/notes/domain/entities/note.dart';
 import '../../../features/notes/presentation/bloc/material_notes_cubit.dart';
+import '../../../features/notes/presentation/bloc/my_notes_stats_cubit.dart';
+import '../../../features/notes/presentation/bloc/note_detail_cubit.dart';
+import '../../../features/notes/presentation/bloc/notes_hub_cubit.dart';
+import '../../../features/notes/presentation/pages/note_detail_page.dart';
+import '../../../features/notes/presentation/pages/notes_page.dart';
 import '../../../features/practice/presentation/bloc/daily_challenge_cubit.dart';
 import '../../../features/practice/presentation/bloc/daily_solve_cubit.dart';
 import '../../../features/practice/presentation/bloc/practice_list_cubit.dart';
@@ -203,7 +217,27 @@ GoRouter createRouter(AuthBloc authBloc) {
               child: const DailyChallengePage(),
             ),
           ),
-          _pending(StudentRoutes.notes, 'Notes', Icons.sticky_note_2_rounded),
+          GoRoute(
+            path: StudentRoutes.notes,
+            builder: (_, _) => MultiBlocProvider(
+              providers: [
+                BlocProvider(
+                  create: (_) => NotesHubCubit(
+                    list: sl(),
+                    create: sl(),
+                    toggleLikeUseCase: sl(),
+                    deleteUseCase: sl(),
+                  ),
+                ),
+                // Its own endpoint, so a failing stats call cannot blank the
+                // feed beside it.
+                BlocProvider(
+                  create: (_) => MyNotesStatsCubit(getStats: sl()),
+                ),
+              ],
+              child: const NotesPage(),
+            ),
+          ),
 
           // ── Compete ───────────────────────────────────────────────────────
           _pending(StudentRoutes.contests, 'Contests', Icons.emoji_events_rounded),
@@ -221,10 +255,12 @@ GoRouter createRouter(AuthBloc authBloc) {
           ),
 
           // ── Campus ────────────────────────────────────────────────────────
-          _pending(
-            StudentRoutes.announcements,
-            'Announcements',
-            Icons.campaign_rounded,
+          GoRoute(
+            path: StudentRoutes.announcements,
+            builder: (_, _) => BlocProvider(
+              create: (_) => AnnouncementsCubit(listAnnouncements: sl()),
+              child: const AnnouncementsPage(),
+            ),
           ),
           GoRoute(
             path: StudentRoutes.calendar,
@@ -240,15 +276,29 @@ GoRouter createRouter(AuthBloc authBloc) {
               child: const CalendarPage(),
             ),
           ),
-          _pending(
-            StudentRoutes.attendance,
-            'Attendance',
-            Icons.event_available_rounded,
+          GoRoute(
+            path: StudentRoutes.attendance,
+            builder: (_, _) => MultiBlocProvider(
+              providers: [
+                // Two cubits, two endpoints: the analytics aggregate has nothing
+                // to re-fetch when a filter changes, and a failure in either
+                // must not blank the other half of the screen.
+                BlocProvider(
+                  create: (_) => AttendanceOverviewCubit(getOverall: sl()),
+                ),
+                BlocProvider(
+                  create: (_) => AttendanceSessionsCubit(listSessions: sl()),
+                ),
+              ],
+              child: const AttendancePage(),
+            ),
           ),
-          _pending(
-            StudentRoutes.academicCalendar,
-            'Academic Calendar',
-            Icons.date_range_rounded,
+          GoRoute(
+            path: StudentRoutes.academicCalendar,
+            builder: (_, _) => BlocProvider(
+              create: (_) => AcademicCalendarCubit(getMyCalendar: sl()),
+              child: const AcademicCalendarPage(),
+            ),
           ),
           GoRoute(
             path: StudentRoutes.settings,
@@ -349,6 +399,35 @@ GoRouter createRouter(AuthBloc authBloc) {
         path: StudentRoutes.licenses,
         parentNavigatorKey: rootKey,
         builder: (_, _) => const LicensesPage(),
+      ),
+      // Above the shell so it covers the nav capsule, and because the nav row
+      // is declared `exact` the detail must not light Announcements up.
+      GoRoute(
+        path: '${StudentRoutes.notes}/:noteId',
+        parentNavigatorKey: rootKey,
+        builder: (context, state) => BlocProvider(
+          create: (_) => NoteDetailCubit(
+            noteId: state.pathParameters['noteId']!,
+            getNote: sl(),
+            updateUseCase: sl(),
+            deleteUseCase: sl(),
+            toggleLikeUseCase: sl(),
+          ),
+          child: const NoteDetailPage(),
+        ),
+      ),
+      GoRoute(
+        path: '${StudentRoutes.announcements}/:announcementId',
+        parentNavigatorKey: rootKey,
+        builder: (context, state) => BlocProvider(
+          create: (_) => AnnouncementDetailCubit(
+            announcementId: state.pathParameters['announcementId']!,
+            getAnnouncement: sl(),
+            registerFor: sl(),
+            cancelRegistrationFor: sl(),
+          ),
+          child: const AnnouncementDetailPage(),
+        ),
       ),
       GoRoute(
         path: '${StudentRoutes.courses}/:courseId',

@@ -17,6 +17,17 @@ class GetCourseAttendanceUseCase implements UseCase<CourseAttendance, IdParams> 
       _repository.getCourseAnalytics(params.id);
 }
 
+class GetOverallAttendanceUseCase
+    implements UseCase<AttendanceOverview, NoParams> {
+  const GetOverallAttendanceUseCase(this._repository);
+
+  final AttendanceRepository _repository;
+
+  @override
+  Future<Either<Failure, AttendanceOverview>> call(NoParams params) =>
+      _repository.getOverallAnalytics();
+}
+
 class ListAttendanceSessionsUseCase
     implements UseCase<Paginated<AttendanceSession>, AttendanceSessionParams> {
   const ListAttendanceSessionsUseCase(this._repository);
@@ -48,17 +59,30 @@ class AttendanceSessionParams extends Equatable {
   final int page;
   final int limit;
 
+  /// The `clear*` flags exist because `??` cannot express "set this to null":
+  /// passing `courseId: null` to drop the filter would silently keep the old
+  /// value. Every nullable field therefore needs its own flag.
   AttendanceSessionParams copyWith({
     int? page,
+    String? courseId,
     String? status,
+    bool clearCourseId = false,
     bool clearStatus = false,
   }) =>
       AttendanceSessionParams(
-        courseId: courseId,
+        courseId: clearCourseId ? null : (courseId ?? this.courseId),
         status: clearStatus ? null : (status ?? this.status),
         page: page ?? this.page,
         limit: limit,
       );
+
+  /// Whether the list is narrowed by anything the user chose — drives the
+  /// filter button's badge and picks the "no matches" empty copy over the
+  /// "nothing recorded yet" one.
+  bool get hasFilters => activeFilterCount > 0;
+
+  int get activeFilterCount =>
+      (courseId != null ? 1 : 0) + (status != null ? 1 : 0);
 
   @override
   List<Object?> get props => [courseId, status, page, limit];

@@ -15,6 +15,22 @@ class Fmt {
     return '${iso.substring(8, 10)}/${iso.substring(5, 7)}/${iso.substring(0, 4)}';
   }
 
+  /// ISO date → `02 Aug 2026`.
+  ///
+  /// Sliced rather than parsed for the same reason as [dmy], and two-digit on
+  /// the day to match the web's `day: '2-digit'` — [longDate] would render the
+  /// same date as `2 Aug 2026`.
+  static String dmyLong(String? iso) {
+    if (iso == null || iso.length < 10) return '—';
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    final month = int.tryParse(iso.substring(5, 7));
+    if (month == null || month < 1 || month > 12) return '—';
+    return '${iso.substring(8, 10)} ${months[month - 1]} ${iso.substring(0, 4)}';
+  }
+
   /// Compact `dd/mm` — for dense chart axes.
   static String dm(String? iso) {
     if (iso == null || iso.length < 10) return '—';

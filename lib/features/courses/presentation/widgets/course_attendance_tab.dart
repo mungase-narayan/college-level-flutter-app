@@ -3,9 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/common/widgets/widgets.dart';
 import '../../../../core/config/theme/app_colors.dart';
-import '../../../../core/config/theme/app_theme.dart';
-import '../../../../core/utils/formatters.dart';
 import '../../../attendance/domain/entities/attendance.dart';
+import '../../../attendance/presentation/widgets/attendance_percent_card.dart';
+import '../../../attendance/presentation/widgets/attendance_session_tile.dart';
 import '../bloc/course_tabs_cubit.dart';
 
 /// Port of `courses/detail/attendance/index.tsx`.
@@ -74,7 +74,7 @@ class _CourseAttendanceTabState extends State<CourseAttendanceTab> {
                 ],
               ),
               const SizedBox(height: 12),
-              _PercentageCard(percentage: data.analytics.percentage),
+              AttendancePercentCard(percentage: data.analytics.percentage),
 
               const SizedBox(height: 16),
               Row(
@@ -126,7 +126,7 @@ class _CourseAttendanceTabState extends State<CourseAttendanceTab> {
                 for (final session in data.sessions.items)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 10),
-                    child: _SessionRow(session: session),
+                    child: AttendanceSessionTile(session: session),
                   ),
                 AppPaginator(
                   pagination: data.sessions.pagination,
@@ -136,111 +136,6 @@ class _CourseAttendanceTabState extends State<CourseAttendanceTab> {
             ],
           );
         },
-      ),
-    );
-  }
-}
-
-/// The overall-percentage card, using the ≥75 / ≥50 colour rule.
-class _PercentageCard extends StatelessWidget {
-  const _PercentageCard({required this.percentage});
-
-  final int percentage;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final color = AttendanceMeta.percentColor(percentage);
-
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text('Attendance', style: theme.textTheme.labelSmall),
-              ),
-              Text(
-                '$percentage%',
-                style: theme.textTheme.titleMedium
-                    ?.copyWith(color: color, fontWeight: FontWeight.w700),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: LinearProgressIndicator(
-              value: (percentage / 100).clamp(0.0, 1.0),
-              minHeight: 6,
-              backgroundColor: context.scheme.muted,
-              valueColor: AlwaysStoppedAnimation(color),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SessionRow extends StatelessWidget {
-  const _SessionRow({required this.session});
-
-  final AttendanceSession session;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final tone = context.tokens.tone(AttendanceMeta.statusShade(session.status));
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: context.scheme.card,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        border: Border.all(color: context.scheme.border.withValues(alpha: 0.6)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  Fmt.dmy(session.sessionDate),
-                  style: theme.textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  [
-                    AttendanceMeta.typeLabel(session.type),
-                    if ((session.topic ?? '').isNotEmpty) session.topic!,
-                  ].join(' · '),
-                  style: theme.textTheme.labelSmall,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-            decoration: BoxDecoration(
-              color: tone.background,
-              borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-            ),
-            child: Text(
-              AttendanceMeta.statusLabel(session.status),
-              style: TextStyle(
-                color: tone.foreground,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

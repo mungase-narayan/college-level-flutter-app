@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 
 import '../../config/theme/app_theme.dart';
 import '../animations/glass_press.dart';
@@ -69,17 +70,48 @@ class LiquidGlassFAB extends StatelessWidget {
             ],
           );
 
-    final button = LiquidGlassContainer(
-      // The tint is high-opacity, so the blur reads only at the edges — but that
-      // is exactly where it matters for a floating control.
-      blur: GlassBlur.regular,
-      spec: spec,
-      radius: GlassRadius.capsule,
-      constraints: const BoxConstraints(minWidth: _size, minHeight: _size),
+    // The only control in the app that genuinely floats over live content, so
+    // it is the only one that gets the real refracting renderer rather than
+    // [GlassSurface]'s fake one. Everything else sits on a card or an opaque
+    // footer, where there is nothing behind to bend.
+    //
+    // Reduce Transparency drops to the in-house container, which resolves to an
+    // opaque fill with no filter at all.
+    final glassBody = Center(child: content);
+    final padded = Padding(
       padding: label == null
           ? EdgeInsets.zero
           : const EdgeInsets.symmetric(horizontal: GlassSpacing.xl),
-      child: Center(child: content),
+      child: glassBody,
+    );
+
+    final button = ConstrainedBox(
+      constraints: const BoxConstraints(minWidth: _size, minHeight: _size),
+      child: glass.reduceTransparency
+          ? LiquidGlassContainer(
+              spec: spec,
+              radius: GlassRadius.capsule,
+              child: padded,
+            )
+          : LiquidGlass.withOwnLayer(
+              shape: const LiquidRoundedSuperellipse(
+                borderRadius: _size / 2,
+              ),
+              settings: LiquidGlassSettings(
+                // The tint is high-opacity, so the lensing reads only at the
+                // rim — but that is exactly where it matters for a floating
+                // control.
+                glassColor: spec.tint,
+                thickness: _size * 0.25,
+                blur: 8,
+                chromaticAberration: 0.02,
+                refractiveIndex: 1.25,
+                lightIntensity: 0.6,
+                ambientStrength: 0.15,
+                saturation: 1.2,
+              ),
+              child: padded,
+            ),
     );
 
     final pressable = GlassPressable(
@@ -87,6 +119,8 @@ class LiquidGlassFAB extends StatelessWidget {
       glowColor: tinted ? scheme.primary : null,
       borderRadius: BorderRadius.circular(GlassRadius.capsule),
       pressedScale: 0.92,
+      // See LiquidGlassButton: an opacity layer would blank the refraction.
+      pressedOpacity: 1.0,
       semanticLabel: tooltip ?? label,
       child: button,
     );

@@ -20,6 +20,7 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
     required this.isDark,
     required this.card,
     required this.control,
+    required this.field,
     required this.chrome,
     required this.chromeScrolled,
     required this.navBar,
@@ -41,7 +42,22 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
   /// Small interactive controls sitting *on* a card: chips, switch tracks,
   /// segmented backgrounds, ghost buttons. Lighter than [card] so it reads as
   /// nested rather than as a second card.
+  ///
+  /// Not used by the search field — see [field], which diverged so that giving the
+  /// search capsule a real bevel and a visible edge would not also restyle every
+  /// chip, switch track and segmented background in the app.
   final GlassSpec control;
+
+  /// Text fields that sit directly on the page rather than nested on a card —
+  /// today the search capsule.
+  ///
+  /// Tints *against* the page in both schemes: darker than a light background,
+  /// lighter than a dark one, the way iOS fills a search field. A white tint on
+  /// light would simply vanish. What separates it from [control] is that it is a
+  /// standalone surface, so it carries a visible hairline, a specular bevel and a
+  /// whisper of contact shadow — the things that make it read as a piece of glass
+  /// laid on the page instead of a recess cut into a card.
+  final GlassSpec field;
 
   /// Navigation chrome at rest (nothing scrolled beneath it yet).
   final GlassSpec chrome;
@@ -130,6 +146,19 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
       opaqueFill: Color(0xFF1E1E2C),
       shadow: [],
     ),
+    field: GlassSpec(
+      // A few points brighter than `control` across the board: this one stands on
+      // the page with nothing behind it to borrow definition from, where `control`
+      // has a card under it doing half the work. Over `#070711` this lands around
+      // `#2C2C35` — an iOS dark search field.
+      tint: Color(0x26FFFFFF), // white @ 15%
+      borderColor: Color(0x33FFFFFF), // white @ 20%
+      highlightColor: Color(0x59FFFFFF), // white @ 35%
+      opaqueFill: Color(0xFF1E1E2C),
+      // None: a black shadow on a near-black page is invisible, the same reason
+      // the nav pill goes without one in this scheme.
+      shadow: [],
+    ),
     chrome: GlassSpec(
       tint: Color(0xA61A1A28), // 65%
       borderColor: Color(0x2EFFFFFF), // white @ 18%
@@ -159,9 +188,15 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
       ],
     ),
     navBar: GlassSpec(
-      tint: Color(0x541A1A28), // 33% — see-through by design
-      borderColor: Color(0x3DFFFFFF), // white @ 24%
-      highlightColor: Color(0x54FFFFFF),
+      // 24% — see-through by design, and over a *lifted* base rather than the
+      // near-black one the other tiers use. At this little alpha a near-black tint
+      // only subtracts light, which reads as a smoked hole punched in the page
+      // instead of as frosted acrylic sitting on it.
+      tint: Color(0x3D1F1F30),
+      // In dark mode the hairline is the bright rim, and with this little fill it
+      // carries the whole silhouette — so both it and the specular go up.
+      borderColor: Color(0x52FFFFFF), // white @ 32%
+      highlightColor: Color(0x75FFFFFF), // white @ 46%
       opaqueFill: Color(0xFF131320),
       shadow: [
         BoxShadow(
@@ -173,9 +208,9 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
       ],
     ),
     navBarScrolled: GlassSpec(
-      tint: Color(0x7A1A1A28), // 48%
-      borderColor: Color(0x47FFFFFF), // white @ 28%
-      highlightColor: Color(0x5CFFFFFF),
+      tint: Color(0x5C1F1F30), // 36% — keeps the resting state's +12 delta
+      borderColor: Color(0x5CFFFFFF), // white @ 36%
+      highlightColor: Color(0x80FFFFFF), // white @ 50%
       opaqueFill: Color(0xFF131320),
       shadow: [
         BoxShadow(
@@ -220,8 +255,10 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
     // Brighter than the dark thumb, because on dark glass the pill has to lift
     // itself: there is no shadow to define it (black on near-black is invisible),
     // so its own luminance is the only thing separating it from the capsule.
-    navPillTint: Color(0x33FFFFFF), // white @ 20%
-    navPillBorder: Color(0x3DFFFFFF), // white @ 24%
+    // Took back the 9 points of fill the capsule gave up, for the same reason the
+    // light pill did: the selected state has to stay obvious on a thinner bar.
+    navPillTint: Color(0x47FFFFFF), // white @ 28%
+    navPillBorder: Color(0x5CFFFFFF), // white @ 36%
   );
 
   /// Light glass.
@@ -250,6 +287,25 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
       borderColor: Color(0x0F11161F), // foreground @ 6%
       highlightColor: Color(0xB3FFFFFF),
       opaqueFill: Color(0xFFEFF2F7), // scheme.muted
+      shadow: [],
+    ),
+    field: GlassSpec(
+      // 10% of a cool near-black rather than of pure black: over the `#F9FAFC`
+      // page this resolves to about `#E1E3E6`, which is where iOS puts a light
+      // search field. Hue-tinted so it reads as a material sampling a cool
+      // backdrop rather than as a grey hole punched in the page.
+      tint: Color(0x1A0B1220),
+      // 12% against `control`'s 6%: nothing sits under this capsule to define its
+      // edge, so the hairline has to do it alone.
+      borderColor: Color(0x1F11161F),
+      // A near-white bevel is what keeps a recessed fill reading as convex glass
+      // instead of as a dent in the page.
+      highlightColor: Color(0xE6FFFFFF),
+      opaqueFill: Color(0xFFEFF2F7), // scheme.muted
+      // None, in either scheme. A drop shadow reads as an object sitting *above*
+      // the page; this capsule is meant to read as a hole cut into it, with the
+      // page showing through. The hairline and the blurred backdrop do all of
+      // the separating.
       shadow: [],
     ),
     chrome: GlassSpec(
@@ -281,31 +337,37 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
       ],
     ),
     navBar: GlassSpec(
-      // 38% of a cool light grey rather than of white. Grey rather than white
-      // because the capsule has to sit a shade below paper white for the white
-      // selection pill to have something to sit *on*; thin because anything more
-      // starts hiding the page instead of filtering it. With only 14 sigma of blur
-      // behind it, this is the whole material — there is no heavy frost to lean on.
-      tint: Color(0x61E9ECF3),
-      borderColor: Color(0x2111161F),
-      highlightColor: Color(0xF2FFFFFF),
+      // 25% of a cool light grey rather than of white. Grey rather than white
+      // because the capsule has to sit a shade below paper white for the selection
+      // pill to have something to sit *on*. Thin because at 22 sigma the frost is
+      // the material now — the tint's remaining job is that contrast with the pill,
+      // not hiding the page. Any more and the capsule stops filtering and starts
+      // covering.
+      tint: Color(0x40E9ECF3),
+      // Eased from 13%: against a fill this thin the dark hairline became the
+      // loudest thing on the shape. The bright rim below defines the edge instead.
+      borderColor: Color(0x1C11161F),
+      highlightColor: Color(0xFFFFFFFF),
       opaqueFill: Color(0xFFFBFCFE),
       shadow: [
+        // Deepened with the thinner fill: with less body of its own, the shadow
+        // does more of the work of lifting the capsule off the page.
         BoxShadow(
-          color: Color(0x1F000000),
-          blurRadius: 32,
-          offset: Offset(0, 12),
-          spreadRadius: -10,
+          color: Color(0x24000000),
+          blurRadius: 34,
+          offset: Offset(0, 14),
+          spreadRadius: -12,
         ),
       ],
     ),
     navBarScrolled: GlassSpec(
-      // 54%. The gap to the resting tint is what keeps labels readable once a
-      // busy page is running under the capsule, but it stays well short of opaque —
-      // this is the state the bar is in for most of a scroll, so pushing it up is
-      // indistinguishable from making the bar solid.
-      tint: Color(0x8AE9ECF3),
-      borderColor: Color(0x2911161F),
+      // 39%. It is the *gap* to the resting tint, not the absolute, that makes the
+      // ramp legible — so it tracked the resting value down and kept its ~14-point
+      // delta. That gap is what keeps labels readable once a busy page is running
+      // under the capsule, while staying well short of opaque: this is the state
+      // the bar is in for most of a scroll.
+      tint: Color(0x63E9ECF3),
+      borderColor: Color(0x2411161F),
       highlightColor: Color(0xFFFFFFFF),
       opaqueFill: Color(0xFFFBFCFE),
       shadow: [
@@ -348,12 +410,15 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
     scrim: Color(0x47000000),
     pillTint: Color(0xF2FFFFFF),
     pillBorder: Color(0x1411161F),
-    // 45% white *on top of* the capsule's own 56% tint — around 75% effective,
+    // 56% white *on top of* the capsule's own 25% tint — around 67% effective,
     // which is opaque enough to read as a distinct lozenge and translucent enough
-    // that a coloured card blurring past underneath still tints it. The silhouette
-    // over plain white content comes from the pill's shadow, not from this alpha.
-    navPillTint: Color(0x73FFFFFF), // white @ 45%
-    navPillBorder: Color(0x24FFFFFF), // white @ 14%
+    // that a coloured card blurring past underneath still tints it. It rose with
+    // the capsule's fall so the pill would not weaken alongside it: coverage is
+    // unchanged, but the contrast against the bare capsule goes from 28 points to
+    // 42, which is what makes the selected tab obvious. The silhouette over plain
+    // white content comes from the pill's shadow, not from this alpha.
+    navPillTint: Color(0x8FFFFFFF), // white @ 56%
+    navPillBorder: Color(0x3DFFFFFF), // white @ 24%
   );
 
   static GlassTokens of(bool isDark) => isDark ? dark : light;
@@ -365,6 +430,7 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
     bool? isDark,
     GlassSpec? card,
     GlassSpec? control,
+    GlassSpec? field,
     GlassSpec? chrome,
     GlassSpec? chromeScrolled,
     GlassSpec? navBar,
@@ -381,6 +447,7 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
         isDark: isDark ?? this.isDark,
         card: card ?? this.card,
         control: control ?? this.control,
+        field: field ?? this.field,
         chrome: chrome ?? this.chrome,
         chromeScrolled: chromeScrolled ?? this.chromeScrolled,
         navBar: navBar ?? this.navBar,
@@ -404,6 +471,7 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
       isDark: t < 0.5 ? isDark : other.isDark,
       card: GlassSpec.lerp(card, other.card, t),
       control: GlassSpec.lerp(control, other.control, t),
+      field: GlassSpec.lerp(field, other.field, t),
       chrome: GlassSpec.lerp(chrome, other.chrome, t),
       chromeScrolled: GlassSpec.lerp(chromeScrolled, other.chromeScrolled, t),
       navBar: GlassSpec.lerp(navBar, other.navBar, t),

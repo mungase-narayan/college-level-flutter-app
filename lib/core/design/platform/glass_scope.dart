@@ -36,6 +36,7 @@ class ResolvedGlass {
 
   GlassSpec get card => _resolve(tokens.card);
   GlassSpec get control => _resolve(tokens.control);
+  GlassSpec get field => _resolve(tokens.field);
   GlassSpec get chrome => _resolve(tokens.chrome);
   GlassSpec get chromeScrolled => _resolve(tokens.chromeScrolled);
   GlassSpec get overlay => _resolve(tokens.overlay);
@@ -63,8 +64,9 @@ class ResolvedGlass {
     return GlassSpec.lerp(navBar, navBarScrolled, progress);
   }
 
-  /// Blur for the capsule — far heavier than the app bar's, which is what lets its
-  /// tint stay translucent enough to see the content passing underneath. See
+  /// Blur for the capsule — deliberately lighter than the app bar's, because the
+  /// capsule is a small object floating over the page and has to keep showing what
+  /// it sits on. Its thin tint is what makes that possible. See
   /// [GlassMetrics.navBarBlurSigma].
   double navBarSigma(double progress) => sigmaOf(
         GlassMetrics.navBarBlurSigma +

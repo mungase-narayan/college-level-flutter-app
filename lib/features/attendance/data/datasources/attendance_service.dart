@@ -21,6 +21,17 @@ class AttendanceService {
     return response.data;
   }
 
+  /// `GET /student/attendance/analytics/overall`.
+  Future<AttendanceOverviewModel> getOverallAnalytics() async {
+    final response = await _client.get(
+      ApiUrls.studentAttendanceOverall,
+      parse: (data) => AttendanceOverviewModel.fromJson(
+        (data as Map<String, dynamic>?) ?? const {},
+      ),
+    );
+    return response.data;
+  }
+
   /// `GET /student/attendance/sessions?courseId&status&page&limit`.
   Future<Paginated<AttendanceSessionModel>> listSessions({
     String? courseId,

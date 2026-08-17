@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
+import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 
 import '../../config/theme/app_theme.dart';
 import '../animations/glass_curves.dart';
@@ -33,8 +34,8 @@ class GlassNavItem {
 /// glass — whereas a bar pinned to the screen edges reads as an opaque strip no
 /// matter how translucent it is.
 ///
-/// Frosting intensifies as content scrolls beneath it (sigma 24 → 38, tint
-/// 65% → 80%), driven by the shell's [GlassScrollNotifier] through a
+/// Frosting intensifies as content scrolls beneath it (sigma 22 → 28, tint
+/// 25% → 39%), driven by the shell's [GlassScrollNotifier] through a
 /// [ValueListenableBuilder] so only this widget rebuilds during a scroll.
 class LiquidGlassNavigationBar extends StatelessWidget {
   const LiquidGlassNavigationBar({
@@ -51,6 +52,18 @@ class LiquidGlassNavigationBar extends StatelessWidget {
 
   /// Ambient source is used when null.
   final ValueListenable<double>? scrollOffset;
+
+  /// Anchors for the geometry tests.
+  ///
+  /// They used to locate these two by position among the bar's glass containers
+  /// — `.first` for the capsule, `.last` for the pill — which silently pointed at
+  /// the wrong widget the moment the capsule stopped being one of them. Keys say
+  /// which is which.
+  @visibleForTesting
+  static const capsuleKey = ValueKey<String>('nav-capsule');
+
+  @visibleForTesting
+  static const pillKey = ValueKey<String>('nav-pill');
 
   @override
   Widget build(BuildContext context) {
@@ -172,6 +185,44 @@ class _NavBarSurface extends StatelessWidget {
     final textScale = media.textScaler.scale(1.0).clamp(1.0, 1.6);
     final height = GlassMetrics.navBarHeight * (1 + (textScale - 1) * 0.5);
 
+    final contents = SizedBox(
+      height: height,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final itemWidth = constraints.maxWidth / items.length;
+
+          return Stack(
+            children: [
+              _SelectionPill(
+                index: currentIndex,
+                itemWidth: itemWidth,
+                trackWidth: constraints.maxWidth,
+                labelWidths: labelWidths,
+              ),
+              Row(
+                children: [
+                  for (final (i, item) in items.indexed)
+                    Expanded(
+                      child: _NavDestination(
+                        item: item,
+                        selected: i == currentIndex,
+                        onTap: () {
+                          // Fires even when re-tapping the active tab, since
+                          // that is a meaningful action (scroll to top, or
+                          // re-open the menu sheet).
+                          GlassHaptics.selection();
+                          onSelected(i);
+                        },
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
     return Padding(
       padding: const EdgeInsets.only(
         left: GlassMetrics.navBarSideMargin,
@@ -182,62 +233,76 @@ class _NavBarSurface extends StatelessWidget {
         // `GlassMetrics.navBarBottomInset`.
         bottom: GlassMetrics.navBarBottomInset,
       ),
-      child: LiquidGlassContainer(
-        blur: GlassBlur.chrome,
-        // A capsule-specific material, not the app bar's: a moderate blur (30)
-        // paired with a translucent tint, so the card scrolling underneath stays a
-        // recognisable soft shape instead of dissolving into a flat wash. See
-        // `GlassMetrics.navBarBlurSigma` for why heavier was worse, not better.
-        sigmaOverride: glass.navBarSigma(frost),
-        spec: glass.navBarAt(frost),
-        // Blurring averages colour toward grey; this puts back what it took, so a
-        // coloured card passing under the capsule tints it rather than fading
-        // beneath it. Nav-capsule only — see the field's docs.
-        saturation: GlassMetrics.navBarSaturation,
-        // Real glass is a lens, not just frosted film: the content behind the
-        // capsule is bent and colour-split at the rim. That edge distortion is what
-        // separates this from a blurred rectangle. Falls back to plain blur where
-        // the shader is unavailable.
-        refract: true,
-        radius: GlassRadius.capsule,
-        child: SizedBox(
-          height: height,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final itemWidth = constraints.maxWidth / items.length;
+      child: glass.reduceTransparency
+          // No lensing, no blur, no translucency — the whole point of the
+          // setting. The in-house container already resolves to an opaque fill,
+          // so this path stays exactly what it has always been.
+          ? LiquidGlassContainer(
+              key: LiquidGlassNavigationBar.capsuleKey,
+              spec: glass.navBarAt(frost),
+              radius: GlassRadius.capsule,
+              child: contents,
+            )
+          : _RefractingCapsule(
+              key: LiquidGlassNavigationBar.capsuleKey,
+              spec: glass.navBarAt(frost),
+              height: height,
+              frost: frost,
+              child: contents,
+            ),
+    );
+  }
+}
 
-              return Stack(
-                children: [
-                  _SelectionPill(
-                    index: currentIndex,
-                    itemWidth: itemWidth,
-                    trackWidth: constraints.maxWidth,
-                    labelWidths: labelWidths,
-                  ),
-                  Row(
-                    children: [
-                      for (final (i, item) in items.indexed)
-                        Expanded(
-                          child: _NavDestination(
-                            item: item,
-                            selected: i == currentIndex,
-                            onTap: () {
-                              // Fires even when re-tapping the active tab, since
-                              // that is a meaningful action (scroll to top, or
-                              // re-open the menu sheet).
-                              GlassHaptics.selection();
-                              onSelected(i);
-                            },
-                          ),
-                        ),
-                    ],
-                  ),
-                ],
-              );
-            },
-          ),
-        ),
+/// The capsule surface, rendered by `liquid_glass_renderer`.
+///
+/// The in-house [LiquidGlassContainer] fakes a lens by displacing a blurred
+/// backdrop at the rim. This is the real thing: a raymarched surface with a
+/// refractive index and a thickness, so content passing underneath bends around
+/// the edge and splits into colour the way it does on iOS 26. That difference is
+/// the whole reason the package is here — nothing else in the app uses it.
+///
+/// The tint still comes from [GlassTokens], at roughly half its alpha: the token
+/// was tuned for a surface whose body came from frost, and this one gets its body
+/// from the glass itself. Any more fill and the lensing is what gets hidden.
+class _RefractingCapsule extends StatelessWidget {
+  const _RefractingCapsule({
+    super.key,
+    required this.spec,
+    required this.height,
+    required this.frost,
+    required this.child,
+  });
+
+  final GlassSpec spec;
+  final double height;
+  final double frost;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final tint = spec.tint;
+
+    return LiquidGlass.withOwnLayer(
+      shape: LiquidRoundedSuperellipse(borderRadius: height / 2),
+      settings: LiquidGlassSettings(
+        // Half the token's alpha — see the class docs.
+        glassColor: tint.withValues(alpha: tint.a * 0.5),
+        // Thickness is what the lens is made of: it sets how far the rim bends
+        // what is behind it. Sized against the capsule so the bend stays in
+        // proportion when Dynamic Type grows the bar.
+        thickness: height * 0.28,
+        // Far less frost than the fallback's 22 sigma. The refraction is doing
+        // the work of separating the bar from the page now, and a heavy blur
+        // would smear away the very content the lensing is bending.
+        blur: 6 + 4 * frost,
+        chromaticAberration: 0.02,
+        refractiveIndex: 1.25,
+        lightIntensity: 0.6,
+        ambientStrength: 0.15,
+        saturation: GlassMetrics.navBarSaturation,
       ),
+      child: child,
     );
   }
 }
@@ -462,6 +527,7 @@ class _SelectionPillState extends State<_SelectionPill>
         );
       },
       child: LiquidGlassContainer(
+        key: LiquidGlassNavigationBar.pillKey,
         spec: glass.card.copyWith(
           // Nav-specific, and deliberately translucent: this pill sits on glass
           // with real content blurring past underneath, so the content should tint
@@ -472,9 +538,10 @@ class _SelectionPillState extends State<_SelectionPill>
           borderColor: glass.navPillBorder,
           // A tight, low shadow — the embossing under a segmented control's
           // thumb, not the drop shadow of a floating card. It is doing more work
-          // now than it was: a 45%-white pill on a white-tinted capsule over white
-          // content has almost no tonal separation left, so the shadow is what
-          // states "this is a lozenge on top" independently of tint.
+          // now than it was: a 56%-white pill on a 25%-tinted capsule over white
+          // content has little tonal separation to lean on, so the shadow is what
+          // states "this is a lozenge on top" independently of tint. It firmed up
+          // when the capsule thinned, for exactly that reason.
           //
           // Dark glass gets none: a black shadow on a dark capsule is invisible,
           // and there the pill's own brightness already carries the separation.
@@ -482,8 +549,8 @@ class _SelectionPillState extends State<_SelectionPill>
               ? const []
               : const [
                   BoxShadow(
-                    color: Color(0x14000000), // black @ 8%
-                    blurRadius: 10,
+                    color: Color(0x1F000000), // black @ 12%
+                    blurRadius: 12,
                     offset: Offset(0, 3),
                     spreadRadius: -2,
                   ),

@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:go_router/go_router.dart';
+
 import '../../../../core/common/widgets/widgets.dart';
+import '../../../../core/network/api_response.dart';
 import '../../../../core/config/theme/app_colors.dart';
 import '../../../../core/config/theme/app_theme.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../shell/presentation/widgets/student_nav.dart';
 import '../../domain/entities/note.dart';
 import '../bloc/material_notes_cubit.dart';
 
@@ -32,6 +36,14 @@ class _MaterialNotesTabState extends State<MaterialNotesTab> {
   void initState() {
     super.initState();
     context.read<MaterialNotesCubit>().load();
+  }
+
+  /// Opens a note, then reloads — reading one bumps its view count, and it may
+  /// have been edited or deleted in there.
+  Future<void> _open(String id) async {
+    final cubit = context.read<MaterialNotesCubit>();
+    await context.push(StudentRoutes.note(id));
+    if (mounted) await cubit.load(refresh: true);
   }
 
   Future<void> _compose() async {
@@ -90,13 +102,14 @@ class _MaterialNotesTabState extends State<MaterialNotesTab> {
         Expanded(
           child: RefreshIndicator(
             onRefresh: () => cubit.load(refresh: true),
-            child: RemoteView<MaterialNotesCubit, List<NoteListItem>>(
+            child: RemoteView<MaterialNotesCubit, Paginated<NoteListItem>>(
               onRetry: cubit.load,
               loading: const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16),
                 child: AppListSkeleton(rows: 2),
               ),
-              builder: (context, notes) {
+              builder: (context, page) {
+                final notes = page.items;
                 if (notes.isEmpty) {
                   return ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
@@ -117,7 +130,10 @@ class _MaterialNotesTabState extends State<MaterialNotesTab> {
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                   itemCount: notes.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 10),
-                  itemBuilder: (context, index) => _NoteRow(note: notes[index]),
+                  itemBuilder: (context, index) => _NoteRow(
+                    note: notes[index],
+                    onTap: () => _open(notes[index].id),
+                  ),
                 );
               },
             ),
@@ -130,9 +146,12 @@ class _MaterialNotesTabState extends State<MaterialNotesTab> {
 
 /// One row of the list — the port of `NoteListRow`.
 class _NoteRow extends StatelessWidget {
-  const _NoteRow({required this.note});
+  const _NoteRow({required this.note, required this.onTap});
 
   final NoteListItem note;
+
+  /// Opens the note in the hub's detail screen — the same one the feed uses.
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -140,6 +159,7 @@ class _NoteRow extends StatelessWidget {
     final scheme = context.scheme;
 
     return AppCard(
+      onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

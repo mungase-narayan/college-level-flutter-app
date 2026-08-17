@@ -2,12 +2,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/common/bloc/remote_cubit.dart';
 import '../../../../core/error/failures.dart';
+import '../../../../core/network/api_response.dart';
 import '../../domain/entities/note.dart';
 import '../../domain/usecases/notes_usecases.dart';
 
 /// The notes filed against one material — the port of `NotesSection`'s
 /// `useNotes({ materialId, sort: 'recent', limit: 30 })`.
-class MaterialNotesCubit extends Cubit<RemoteState<List<NoteListItem>>> {
+class MaterialNotesCubit
+    extends Cubit<RemoteState<Paginated<NoteListItem>>> {
   MaterialNotesCubit({
     required ListNotesUseCase list,
     required CreateNoteUseCase create,
@@ -34,7 +36,23 @@ class MaterialNotesCubit extends Cubit<RemoteState<List<NoteListItem>>> {
       clearFailure: true,
     ));
 
-    final result = await _list(ListNotesParams(materialId: link.materialId));
+    final result = await _list(
+      ListNotesParams(
+        materialId: link.materialId,
+        // Sending the question too is what makes a question-scoped tab actually
+        // scoped: without it the request carried no filter at all and listed
+        // every note in the school.
+        questionId: link.questionId,
+        // Only when there is nothing narrower. A note filed against a material
+        // always carries that material's course, so adding it narrows nothing —
+        // but it would drop a note whose course was never set.
+        courseId: link.materialId == null && link.questionId == null
+            ? link.courseId
+            : null,
+        // Explicit, because the shared default is now the hub's smaller page.
+        limit: NoteMeta.embeddedPageSize,
+      ),
+    );
     if (isClosed) return;
 
     result.fold(
@@ -43,7 +61,7 @@ class MaterialNotesCubit extends Cubit<RemoteState<List<NoteListItem>>> {
         failure: failure,
         isRefreshing: false,
       )),
-      (notes) => emit(RemoteState(status: RemoteStatus.success, data: notes)),
+      (page) => emit(RemoteState(status: RemoteStatus.success, data: page)),
     );
   }
 

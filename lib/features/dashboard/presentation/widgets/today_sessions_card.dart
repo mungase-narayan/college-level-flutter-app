@@ -156,9 +156,15 @@ class _Header extends StatelessWidget {
                       color: scheme.primary,
                     ),
                     const SizedBox(width: 7),
-                    Text(
-                      "Today's sessions",
-                      style: theme.textTheme.titleSmall,
+                    // Flexible so a large accessibility text scale ellipsises
+                    // the title rather than overflowing the header row.
+                    Flexible(
+                      child: Text(
+                        "Today's sessions",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleSmall,
+                      ),
                     ),
                   ],
                 ),
@@ -256,20 +262,20 @@ class _Tracker extends StatelessWidget {
       final progress = total <= 0 ? 1.0 : (elapsed / total).clamp(0.0, 1.0);
       final emerald = TwColors.emerald.s500;
 
+      // A plain tinted box: the web's `border-l-4` accent edge is dropped by
+      // request. Keep the border uniform — Flutter refuses to paint a
+      // non-uniform one under a borderRadius, and the throw lands after the
+      // background fill, leaving a green rectangle with nothing in it.
       return Container(
         padding: const EdgeInsets.all(13),
         decoration: BoxDecoration(
           color: emerald.withValues(alpha: 0.06),
           borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-          border: Border(
-            top: BorderSide(color: emerald.withValues(alpha: 0.25)),
-            right: BorderSide(color: emerald.withValues(alpha: 0.25)),
-            bottom: BorderSide(color: emerald.withValues(alpha: 0.25)),
-            left: BorderSide(color: emerald, width: 4),
-          ),
+          border: Border.all(color: emerald.withValues(alpha: 0.25)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Row(
               children: [
@@ -284,10 +290,15 @@ class _Tracker extends StatelessWidget {
                     letterSpacing: 1.1,
                   ),
                 ),
-                const Spacer(),
-                Text(
-                  '${_gap(live.end.difference(now))} left',
-                  style: theme.textTheme.labelSmall?.copyWith(fontSize: 11),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${_gap(live.end.difference(now))} left',
+                    textAlign: TextAlign.end,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelSmall?.copyWith(fontSize: 11),
+                  ),
                 ),
               ],
             ),
@@ -298,19 +309,21 @@ class _Tracker extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.titleSmall,
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 4),
             Wrap(
               spacing: 10,
               runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 _MetaBit(
                   icon: Icons.schedule_rounded,
                   label: '${_time(live.start)} – ${_time(live.end)}',
                 ),
-                if (live.room?.code != null)
-                  _MetaBit(icon: Icons.meeting_room_outlined, label: live.room!.code!),
-                if (live.teacher?.name != null)
-                  _MetaBit(icon: Icons.person_outline_rounded, label: live.teacher!.name!),
+                if (live.room?.code case final room? when room.isNotEmpty)
+                  _MetaBit(icon: Icons.meeting_room_outlined, label: room),
+                if (live.teacher?.name case final teacher?
+                    when teacher.isNotEmpty)
+                  _MetaBit(icon: Icons.person_outline_rounded, label: teacher),
               ],
             ),
             const SizedBox(height: 10),
@@ -514,13 +527,22 @@ class _TimelineRow extends StatelessWidget {
             Column(
               children: [
                 Container(
-                  margin: const EdgeInsets.only(top: 4),
+                  margin: const EdgeInsets.only(top: 5),
                   width: 10,
                   height: 10,
                   decoration: BoxDecoration(
                     color: dotColor,
                     shape: BoxShape.circle,
-                    border: Border.all(color: scheme.card, width: 3),
+                    // The web's `ring-4` sits *outside* the dot; a Border here
+                    // eats into it and leaves a 4px speck instead.
+                    boxShadow: [
+                      BoxShadow(
+                        color: phase == SessionPhase.live
+                            ? TwColors.emerald.s500.withValues(alpha: 0.15)
+                            : scheme.card,
+                        spreadRadius: 3.5,
+                      ),
+                    ],
                   ),
                 ),
                 if (!isLast)

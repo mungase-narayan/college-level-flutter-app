@@ -5,7 +5,7 @@ import '../../config/theme/app_theme.dart';
 import '../extensions/glass_context.dart';
 import '../animations/glass_press.dart';
 import '../theme/glass_specs.dart';
-import 'liquid_glass_container.dart';
+import 'glass_surface.dart';
 
 /// Glass button variants, one-to-one with `AppButtonVariant` so the adaptive
 /// branch in `app_button.dart` is a direct mapping — plus [glass], which has no
@@ -80,7 +80,7 @@ class LiquidGlassButton extends StatelessWidget {
     final resolvedRadius =
         radius ?? (expand ? GlassRadius.md : GlassRadius.capsule);
 
-    final (spec, foreground, glow) = switch (variant) {
+    final (baseSpec, baseForeground, glow) = switch (variant) {
       GlassButtonVariant.primary => (
           glass.card.copyWith(
             // Not fully opaque: the backdrop bleeding through at 6% is what
@@ -123,7 +123,30 @@ class LiquidGlassButton extends StatelessWidget {
 
     // A disabled button loses its glow and most of its presence, but keeps its
     // shape so the layout does not shift.
-    final opacity = _enabled ? 1.0 : 0.45;
+    //
+    // Dimmed colour by colour rather than with an `Opacity` wrapper, which is
+    // how this used to work. `Opacity` composites the subtree into its own
+    // layer, and a backdrop filter inside one has no valid backdrop left to
+    // sample — the whole button rendered as an empty outline with its label
+    // gone. Folding the fade into the colours also saves the save-layer.
+    const disabledFade = 0.45;
+
+    Color fade(Color color) => _enabled
+        ? color
+        : color.withValues(alpha: color.a * disabledFade);
+
+    final foreground = fade(baseForeground);
+    final spec = _enabled
+        ? baseSpec
+        : baseSpec.copyWith(
+            tint: fade(baseSpec.tint),
+            borderColor: fade(baseSpec.borderColor),
+            highlightColor: fade(baseSpec.highlightColor),
+            shadow: [
+              for (final shadow in baseSpec.shadow)
+                shadow.copyWith(color: fade(shadow.color)),
+            ],
+          );
 
     final content = child ??
         DefaultTextStyle.merge(
@@ -157,32 +180,58 @@ class LiquidGlassButton extends StatelessWidget {
           ),
         );
 
-    Widget button = LiquidGlassContainer(
-      spec: spec,
-      radius: resolvedRadius,
-      // Ghost and outline buttons sit inline in content; a drop shadow there
-      // would read as a floating card rather than as a button.
-      showShadow: variant == GlassButtonVariant.primary ||
-          variant == GlassButtonVariant.destructive,
-      constraints: BoxConstraints(minHeight: size.height),
-      padding: EdgeInsets.symmetric(horizontal: size.horizontalPadding),
-      child: Center(
-        // `widthFactor: 1` keeps a non-expanding button hugging its content
-        // instead of stretching to the parent's width.
-        widthFactor: expand ? null : 1.0,
-        child: content,
-      ),
-    );
+    // Rendered by `liquid_glass_renderer` through [GlassSurface], which picks
+    // the fake renderer: a button sits on a card or an opaque footer, so there
+    // is nothing behind it for the real one to bend. See that class for the
+    // reasoning and for how Reduce Transparency is handled.
+    //
+    // `ghost` is the exception that proves the rule. Its tint, border and
+    // highlight are all fully transparent by design — it is a text button — so
+    // it skips the surface entirely rather than gaining a pane of glass the
+    // design deliberately leaves out.
+    final bare = variant == GlassButtonVariant.ghost;
 
-    if (opacity < 1) {
-      button = Opacity(opacity: opacity, child: button);
-    }
+    Widget button = bare
+        ? Padding(
+            padding: EdgeInsets.symmetric(horizontal: size.horizontalPadding),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: size.height),
+              child: Center(widthFactor: expand ? null : 1.0, child: content),
+            ),
+          )
+        : GlassSurface(
+            spec: spec,
+            radius: resolvedRadius,
+            // A solid brand fill at 94% has almost nothing to show through it,
+            // so the blur would be paid for and never seen. The translucent
+            // variants get a real one.
+            blur: variant == GlassButtonVariant.primary ||
+                    variant == GlassButtonVariant.destructive
+                ? 0
+                : 6,
+            // Ghost and outline buttons sit inline in content; a drop shadow
+            // there would read as a floating card rather than as a button.
+            showShadow: variant == GlassButtonVariant.primary ||
+                variant == GlassButtonVariant.destructive,
+            constraints: BoxConstraints(minHeight: size.height),
+            padding: EdgeInsets.symmetric(horizontal: size.horizontalPadding),
+            child: Center(
+              // `widthFactor: 1` keeps a non-expanding button hugging its
+              // content instead of stretching to the parent's width.
+              widthFactor: expand ? null : 1.0,
+              child: content,
+            ),
+          );
 
     button = GlassPressable(
       onTap: _enabled ? onPressed : null,
       glowColor: glow,
       borderRadius: BorderRadius.circular(resolvedRadius),
       pressedScale: 0.955,
+      // Scale and glow carry the press; the opacity dip is switched off because
+      // it composites into its own layer, and the surface's backdrop filter has
+      // no backdrop to sample from inside one.
+      pressedOpacity: 1.0,
       semanticLabel: label,
       child: button,
     );

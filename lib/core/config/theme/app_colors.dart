@@ -167,6 +167,13 @@ class TwColors {
   static const violet = TwShade(Color(0xFFC4B5FD), Color(0xFFA78BFA), Color(0xFF8B5CF6), Color(0xFF6D28D9));
   static const cyan = TwShade(Color(0xFF67E8F9), Color(0xFF22D3EE), Color(0xFF06B6D4), Color(0xFF0E7490));
   static const pink = TwShade(Color(0xFFF9A8D4), Color(0xFFF472B6), Color(0xFFEC4899), Color(0xFFBE185D));
+  // Added for the announcement type palette, which needs fifteen distinguishable
+  // tints: `lime` for TRANSPORT, `fuchsia` for SCHOLARSHIP (the web tints that
+  // one with `chart-4`, a magenta — `pink` and `purple` are already spoken for),
+  // and `gray` for OTHER, which the web keeps distinct from GENERAL's slate.
+  static const lime = TwShade(Color(0xFFBEF264), Color(0xFFA3E635), Color(0xFF84CC16), Color(0xFF4D7C0F));
+  static const fuchsia = TwShade(Color(0xFFF0ABFC), Color(0xFFE879F9), Color(0xFFD946EF), Color(0xFFA21CAF));
+  static const gray = TwShade(Color(0xFFD1D5DB), Color(0xFF9CA3AF), Color(0xFF6B7280), Color(0xFF374151));
 }
 
 /// Parses a `#rrggbb` colour as the API sends it — a course's `colorCode`, a
