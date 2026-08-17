@@ -38,7 +38,7 @@ Future<void> main() async {
 /// up later. A decode failure is swallowed — a missing logo is not a reason to
 /// block startup.
 Future<void> _precacheAppLogo() async {
-  final stream = const AssetImage(
+  final stream = AssetImage(
     AppLogo.asset,
   ).resolve(ImageConfiguration.empty);
   final completer = Completer<void>();

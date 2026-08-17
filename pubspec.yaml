@@ -83,8 +83,10 @@ flutter:
 
   assets:
     # The launcher artwork, reused by the boot splash so the first frame
-    # matches the icon the user just tapped.
+    # matches the icon the user just tapped. Two marks because the two
+    # platforms ship different launcher icons; AppLogo picks between them.
     - assets/images/app_logo.png
+    - assets/images/app_logo_ios.png
 
   # Compiled by impellerc at build time and loaded through
   # `FragmentProgram.fromAsset`. Not a dependency — a first-party asset.
