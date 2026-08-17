@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../config/theme/app_theme.dart';
+import '../../design/platform/app_platform.dart';
 
 /// The launcher artwork, drawn as the rounded tile the OS shows on the home
 /// screen.
@@ -14,7 +15,17 @@ import '../../config/theme/app_theme.dart';
 class AppLogo extends StatelessWidget {
   const AppLogo({super.key, this.size = 38, this.radius});
 
-  static const asset = 'assets/images/app_logo.png';
+  /// The flat mark, used on every platform whose launcher icon it still
+  /// matches.
+  static const materialAsset = 'assets/images/app_logo.png';
+
+  /// The dimensional mark cut from the iOS app icon set, so the boot splash
+  /// shows the same tile the user just tapped on the home screen.
+  static const iosAsset = 'assets/images/app_logo_ios.png';
+
+  /// The artwork matching the launcher icon this build actually installs.
+  static String get asset =>
+      AppPlatform.isIOS ? iosAsset : materialAsset;
 
   final double size;
 
