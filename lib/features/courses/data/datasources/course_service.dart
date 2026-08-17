@@ -3,6 +3,7 @@ import '../../../../core/network/api_response.dart';
 import '../../../../core/network/dio_client.dart';
 import '../models/course_model.dart';
 import '../models/course_tree_model.dart';
+import '../models/material_comment_model.dart';
 
 /// Raw HTTP for the student course endpoints — the port of
 /// `src/api/student-course`.
@@ -80,4 +81,74 @@ class CourseService {
       await _client.delete(path, parse: (_) => null);
     }
   }
+
+  // ── Material comments ──────────────────────────────────────────────────────
+  //
+  // The student surface of `src/api/course-material-comments`. A student never
+  // sends `divisionId`: the backend resolves it from their own enrolment, and
+  // returns 403 `COURSE_COMMENT_NO_DIVISION` when they have none.
+
+  /// `GET /student/course-materials/:id/comments` — top-level comments, each
+  /// with its replies nested one level deep.
+  Future<List<MaterialCommentModel>> listComments(String materialId) async {
+    final response = await _client.get(
+      ApiUrls.studentMaterialComments(materialId),
+      parse: (data) =>
+          (data as List?)
+              ?.whereType<Map<String, dynamic>>()
+              .map(MaterialCommentModel.fromJson)
+              .toList(growable: false) ??
+          const <MaterialCommentModel>[],
+    );
+    return response.data;
+  }
+
+  /// `POST /student/course-materials/:id/comments`.
+  Future<MaterialCommentModel> createComment({
+    required String materialId,
+    required String content,
+  }) async {
+    final response = await _client.post(
+      ApiUrls.studentMaterialComments(materialId),
+      body: {'content': content},
+      parse: (data) => MaterialCommentModel.fromJson(
+        (data as Map<String, dynamic>?) ?? const {},
+      ),
+    );
+    return response.data;
+  }
+
+  /// `POST /student/course-material-comments/:id/replies`.
+  Future<MaterialCommentModel> replyToComment({
+    required String commentId,
+    required String content,
+  }) async {
+    final response = await _client.post(
+      ApiUrls.studentCommentReplies(commentId),
+      body: {'content': content},
+      parse: (data) => MaterialCommentModel.fromJson(
+        (data as Map<String, dynamic>?) ?? const {},
+      ),
+    );
+    return response.data;
+  }
+
+  /// `PATCH /student/course-material-comments/:id`.
+  Future<MaterialCommentModel> updateComment({
+    required String commentId,
+    required String content,
+  }) async {
+    final response = await _client.patch(
+      ApiUrls.studentComment(commentId),
+      body: {'content': content},
+      parse: (data) => MaterialCommentModel.fromJson(
+        (data as Map<String, dynamic>?) ?? const {},
+      ),
+    );
+    return response.data;
+  }
+
+  /// `DELETE /student/course-material-comments/:id`.
+  Future<void> deleteComment(String commentId) =>
+      _client.delete(ApiUrls.studentComment(commentId), parse: (_) => null);
 }

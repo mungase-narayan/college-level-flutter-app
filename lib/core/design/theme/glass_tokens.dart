@@ -29,6 +29,8 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
     required this.scrim,
     required this.pillTint,
     required this.pillBorder,
+    required this.navPillTint,
+    required this.navPillBorder,
   });
 
   final bool isDark;
@@ -72,12 +74,29 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
   /// The dim layer painted behind a modal.
   final Color scrim;
 
-  /// Fill of the active indicator: the nav bar's selection pill and the
-  /// segmented control's thumb.
+  /// Fill of the segmented control's thumb — a near-opaque indicator sitting on a
+  /// surface with nothing behind it to show through.
   final Color pillTint;
 
-  /// Hairline around the active indicator.
+  /// Hairline around that thumb.
   final Color pillBorder;
+
+  /// Fill of the nav capsule's selection pill.
+  ///
+  /// Separate from [pillTint] because the two solve opposite problems. The
+  /// segmented thumb sits on an opaque card and must read as solid; the nav pill
+  /// sits on *glass*, with real content blurring past underneath it, and the point
+  /// is that the content tints it. Rendering it near-opaque like the thumb is what
+  /// made it a white lozenge painted on the glass rather than a second layer of it.
+  ///
+  /// So this is a genuinely translucent white, layered over the capsule's own tint
+  /// rather than replacing it: glass on glass, which is where the reference gets
+  /// its pale green over a green book cover.
+  final Color navPillTint;
+
+  /// Hairline around the nav pill. White at low opacity in both schemes — this rim
+  /// is a light catch along the lozenge's edge, not a border drawn around it.
+  final Color navPillBorder;
 
   // ── Presets ────────────────────────────────────────────────────────────────
 
@@ -140,7 +159,7 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
       ],
     ),
     navBar: GlassSpec(
-      tint: Color(0x701A1A28), // 44% — see-through by design
+      tint: Color(0x541A1A28), // 33% — see-through by design
       borderColor: Color(0x3DFFFFFF), // white @ 24%
       highlightColor: Color(0x54FFFFFF),
       opaqueFill: Color(0xFF131320),
@@ -154,7 +173,7 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
       ],
     ),
     navBarScrolled: GlassSpec(
-      tint: Color(0x9E1A1A28), // 62%
+      tint: Color(0x7A1A1A28), // 48%
       borderColor: Color(0x47FFFFFF), // white @ 28%
       highlightColor: Color(0x5CFFFFFF),
       opaqueFill: Color(0xFF131320),
@@ -198,6 +217,11 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
     scrim: Color(0x80000000),
     pillTint: Color(0x2EFFFFFF),
     pillBorder: Color(0x33FFFFFF),
+    // Brighter than the dark thumb, because on dark glass the pill has to lift
+    // itself: there is no shadow to define it (black on near-black is invisible),
+    // so its own luminance is the only thing separating it from the capsule.
+    navPillTint: Color(0x33FFFFFF), // white @ 20%
+    navPillBorder: Color(0x3DFFFFFF), // white @ 24%
   );
 
   /// Light glass.
@@ -257,7 +281,12 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
       ],
     ),
     navBar: GlassSpec(
-      tint: Color(0x70FFFFFF), // 44% — the card underneath must read through
+      // 38% of a cool light grey rather than of white. Grey rather than white
+      // because the capsule has to sit a shade below paper white for the white
+      // selection pill to have something to sit *on*; thin because anything more
+      // starts hiding the page instead of filtering it. With only 14 sigma of blur
+      // behind it, this is the whole material — there is no heavy frost to lean on.
+      tint: Color(0x61E9ECF3),
       borderColor: Color(0x2111161F),
       highlightColor: Color(0xF2FFFFFF),
       opaqueFill: Color(0xFFFBFCFE),
@@ -271,7 +300,11 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
       ],
     ),
     navBarScrolled: GlassSpec(
-      tint: Color(0xA6FFFFFF), // 65%
+      // 54%. The gap to the resting tint is what keeps labels readable once a
+      // busy page is running under the capsule, but it stays well short of opaque —
+      // this is the state the bar is in for most of a scroll, so pushing it up is
+      // indistinguishable from making the bar solid.
+      tint: Color(0x8AE9ECF3),
       borderColor: Color(0x2911161F),
       highlightColor: Color(0xFFFFFFFF),
       opaqueFill: Color(0xFFFBFCFE),
@@ -315,6 +348,12 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
     scrim: Color(0x47000000),
     pillTint: Color(0xF2FFFFFF),
     pillBorder: Color(0x1411161F),
+    // 45% white *on top of* the capsule's own 56% tint — around 75% effective,
+    // which is opaque enough to read as a distinct lozenge and translucent enough
+    // that a coloured card blurring past underneath still tints it. The silhouette
+    // over plain white content comes from the pill's shadow, not from this alpha.
+    navPillTint: Color(0x73FFFFFF), // white @ 45%
+    navPillBorder: Color(0x24FFFFFF), // white @ 14%
   );
 
   static GlassTokens of(bool isDark) => isDark ? dark : light;
@@ -335,6 +374,8 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
     Color? scrim,
     Color? pillTint,
     Color? pillBorder,
+    Color? navPillTint,
+    Color? navPillBorder,
   }) =>
       GlassTokens(
         isDark: isDark ?? this.isDark,
@@ -349,6 +390,8 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
         scrim: scrim ?? this.scrim,
         pillTint: pillTint ?? this.pillTint,
         pillBorder: pillBorder ?? this.pillBorder,
+        navPillTint: navPillTint ?? this.navPillTint,
+        navPillBorder: navPillBorder ?? this.navPillBorder,
       );
 
   /// Truly interpolates, unlike the sibling `AppTokens.lerp` which snaps at the
@@ -370,6 +413,8 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
       scrim: Color.lerp(scrim, other.scrim, t)!,
       pillTint: Color.lerp(pillTint, other.pillTint, t)!,
       pillBorder: Color.lerp(pillBorder, other.pillBorder, t)!,
+      navPillTint: Color.lerp(navPillTint, other.navPillTint, t)!,
+      navPillBorder: Color.lerp(navPillBorder, other.navPillBorder, t)!,
     );
   }
 }

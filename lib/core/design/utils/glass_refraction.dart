@@ -77,6 +77,7 @@ abstract final class GlassRefraction {
     double refraction = GlassMetrics.chromeRefraction,
     double dispersion = GlassMetrics.chromeDispersion,
     double edgeWidth = GlassMetrics.chromeRefractionEdge,
+    double saturation = 1.0,
   }) {
     final blur = sigma > 0
         ? ui.ImageFilter.blur(
@@ -87,13 +88,13 @@ abstract final class GlassRefraction {
         : null;
 
     final program = _program;
-    if (program == null || size.isEmpty) return blur;
+    if (program == null || size.isEmpty) return saturate(blur, saturation);
 
     // Below roughly twice the edge width there is no optically flat centre left,
     // so the whole surface would smear instead of showing a rim. Cheaper and more
     // honest to skip it.
     final shortestSide = size.shortestSide;
-    if (shortestSide < edgeWidth * 2) return blur;
+    if (shortestSide < edgeWidth * 2) return saturate(blur, saturation);
 
     try {
       final shader = program.fragmentShader()
@@ -105,11 +106,14 @@ abstract final class GlassRefraction {
         ..setFloat(_uEdgeWidth, edgeWidth.clamp(1.0, shortestSide / 2));
 
       final refract = ui.ImageFilter.shader(shader);
-      return blur == null
-          ? refract
-          // Blur first, then bend the blurred result: bending first and blurring
-          // after would average the displacement away.
-          : ui.ImageFilter.compose(outer: refract, inner: blur);
+      return saturate(
+        blur == null
+            ? refract
+            // Blur first, then bend the blurred result: bending first and blurring
+            // after would average the displacement away.
+            : ui.ImageFilter.compose(outer: refract, inner: blur),
+        saturation,
+      );
     } on Object catch (error) {
       assert(() {
         debugPrint('GlassRefraction filter failed, using blur: $error');
@@ -118,7 +122,49 @@ abstract final class GlassRefraction {
       // One failure means this platform cannot do it at all; stop retrying every
       // frame.
       _program = null;
-      return blur;
+      return saturate(blur, saturation);
     }
+  }
+
+  /// Wraps [inner] in a saturation boost, or returns it untouched at 1.0.
+  ///
+  /// Applied *last*, over the blurred and refracted result, because it exists to
+  /// undo what those two do to colour: a Gaussian blur averages neighbouring pixels
+  /// toward grey, so a vivid card behind the glass comes back desaturated. iOS's
+  /// own materials compensate the same way, which is why colour bleeds *through*
+  /// Apple's glass rather than fading under it.
+  ///
+  /// Costs nothing when unused — a [ui.ColorFilter] is itself a [ui.ImageFilter],
+  /// so this is one more entry in the compose chain the surface already pays for,
+  /// and at 1.0 no entry at all.
+  static ui.ImageFilter? saturate(ui.ImageFilter? inner, double saturation) {
+    if (inner == null || (saturation - 1.0).abs() < 0.001) return inner;
+    return ui.ImageFilter.compose(
+      outer: ui.ColorFilter.matrix(saturationMatrix(saturation)),
+      inner: inner,
+    );
+  }
+
+  /// The standard luminance-preserving saturation matrix.
+  ///
+  /// The 0.213/0.715/0.072 weights are Rec. 709 luma: desaturating pulls each
+  /// channel toward the *perceived* brightness of the pixel rather than toward the
+  /// average of its channels, so boosting the other way does not shift greys.
+  @visibleForTesting
+  static List<double> saturationMatrix(double s) {
+    const lumR = 0.213;
+    const lumG = 0.715;
+    const lumB = 0.072;
+    final invSat = 1 - s;
+    final r = invSat * lumR;
+    final g = invSat * lumG;
+    final b = invSat * lumB;
+
+    return <double>[
+      r + s, g, b, 0, 0, //
+      r, g + s, b, 0, 0, //
+      r, g, b + s, 0, 0, //
+      0, 0, 0, 1, 0, //
+    ];
   }
 }

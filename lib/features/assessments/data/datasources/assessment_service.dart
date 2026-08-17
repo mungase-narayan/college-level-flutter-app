@@ -1,4 +1,5 @@
 import '../../../../core/constants/api_urls.dart';
+import '../../../../core/network/api_response.dart';
 import '../../../../core/network/dio_client.dart';
 import '../models/assessment_detail_model.dart';
 import '../models/student_assessment_model.dart';
@@ -32,6 +33,39 @@ class AssessmentService {
               .map(StudentAssessmentModel.fromJson)
               .toList(growable: false) ??
           const <StudentAssessmentModel>[],
+    );
+    return response.data;
+  }
+
+  /// `GET /student/assignments/all?category=quiz&…` — every quiz (or
+  /// assignment) across the student's enrolled courses.
+  ///
+  /// Unlike [listForCourse] this one is paginated and filtered server-side, and
+  /// each row carries the course and the teacher who set it. `category` is as
+  /// load-bearing here as it is there: omit it and the backend *excludes*
+  /// quizzes and hands back assignments instead.
+  Future<Paginated<StudentAssessmentModel>> listAll({
+    String? category,
+    String? courseId,
+    String? status,
+    String? search,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final response = await _client.get(
+      ApiUrls.studentAssignmentsAll,
+      query: {
+        'category': category,
+        'courseId': courseId,
+        'status': status,
+        'search': search,
+        'page': page,
+        'limit': limit,
+      },
+      parse: (data) => Paginated<StudentAssessmentModel>.fromJson(
+        data,
+        StudentAssessmentModel.fromJson,
+      ),
     );
     return response.data;
   }

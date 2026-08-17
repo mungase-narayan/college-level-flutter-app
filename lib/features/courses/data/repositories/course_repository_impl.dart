@@ -5,6 +5,7 @@ import '../../../../core/error/guard.dart';
 import '../../../../core/network/api_response.dart';
 import '../../domain/entities/course.dart';
 import '../../domain/entities/course_tree.dart';
+import '../../domain/entities/material_comment.dart';
 import '../../domain/repositories/course_repository.dart';
 import '../datasources/course_service.dart';
 
@@ -53,6 +54,46 @@ class CourseRepositoryImpl with RepositoryGuard implements CourseRepository {
           materialId: materialId,
           completed: completed,
         );
+        return unit;
+      });
+
+  @override
+  Future<Either<Failure, List<MaterialComment>>> listComments(
+    String materialId,
+  ) =>
+      guard(() => _service.listComments(materialId));
+
+  @override
+  Future<Either<Failure, MaterialComment>> createComment({
+    required String materialId,
+    required String content,
+  }) =>
+      guard(
+        () => _service.createComment(materialId: materialId, content: content),
+      );
+
+  @override
+  Future<Either<Failure, MaterialComment>> replyToComment({
+    required String commentId,
+    required String content,
+  }) =>
+      guard(
+        () => _service.replyToComment(commentId: commentId, content: content),
+      );
+
+  @override
+  Future<Either<Failure, MaterialComment>> updateComment({
+    required String commentId,
+    required String content,
+  }) =>
+      guard(
+        () => _service.updateComment(commentId: commentId, content: content),
+      );
+
+  @override
+  Future<Either<Failure, Unit>> deleteComment(String commentId) =>
+      guard(() async {
+        await _service.deleteComment(commentId);
         return unit;
       });
 }

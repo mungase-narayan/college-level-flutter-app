@@ -12,6 +12,8 @@ class _MockList extends Mock implements ListPracticeQuestionsUseCase {}
 
 class _MockSetBookmarked extends Mock implements SetBookmarkedUseCase {}
 
+class _MockGetFilters extends Mock implements GetPracticeFiltersUseCase {}
+
 /// The filter sheet stages sort, status and difficulty and commits them together.
 /// `setFilters` is what turns that into one request instead of three, and its
 /// null-means-cleared contract is easy to get wrong given `copyWith`'s `??`.
@@ -35,6 +37,7 @@ void main() {
     cubit = PracticeListCubit(
       listQuestions: list,
       setBookmarked: _MockSetBookmarked(),
+      getFilters: _MockGetFilters(),
     );
   });
 

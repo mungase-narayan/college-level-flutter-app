@@ -100,21 +100,56 @@ class AssessmentDetailCubit extends Cubit<RemoteState<AssessmentDetail>> {
   /// The note body for a submission-type assessment (one with no questions).
   String? _note;
 
+  /// Files attached to a submission-type assessment.
+  ///
+  /// A side field like [_note] rather than emitted state, and for the same
+  /// reason the class doc gives for *not* doing this with answers: the form
+  /// owns the live list and renders from its own copy, so nothing here is read
+  /// during a build. What this field exists for is the **auto-submit** path —
+  /// when the clock runs out or the violation limit trips, the runner calls
+  /// [submit] directly and the student's attachments have to go with it.
+  List<String>? _fileIds;
+
+  /// True when this assessment is answered with a note and files rather than
+  /// with questions.
+  bool get _isSubmissionType => state.data?.questions.isEmpty ?? false;
+
   /// Pushes the current draft to the server. Safe to call repeatedly.
   Future<Failure?> flushDraft() async {
-    if (isClosed || (draft.isEmpty && (_note ?? '').isEmpty)) return null;
-    final result = await _saveAttempt(
-      AttemptPayload(
-        assessmentId: assessmentId,
-        answers: draft.isEmpty ? null : _answersPayload(),
-        note: _note,
-      ),
-    );
+    if (isClosed) return null;
+
+    // A question-type attempt with nothing answered has genuinely nothing to
+    // send. A submission-type one always sends: the server reads an absent
+    // `fileIds` as "keep what you had", so a student who removes their last
+    // attachment and taps Save draft would otherwise get a success toast for a
+    // request that was never made — and the file would still be attached.
+    if (!_isSubmissionType && draft.isEmpty) return null;
+
+    final result = await _saveAttempt(_payload());
     return result.fold((failure) => failure, (_) => null);
   }
 
+  /// The body for a save or a submit.
+  ///
+  /// `note` and `fileIds` are sent **only** for a submission-type assessment,
+  /// and then unconditionally — an empty string and an empty list are how a
+  /// cleared note and a removed attachment are expressed. A question-type
+  /// attempt omits both so it can never clobber them.
+  AttemptPayload _payload({bool autoSubmitted = false}) => AttemptPayload(
+        assessmentId: assessmentId,
+        answers: draft.isEmpty ? null : _answersPayload(),
+        note: _isSubmissionType ? (_note ?? '') : null,
+        fileIds: _isSubmissionType ? (_fileIds ?? const []) : null,
+        autoSubmitted: autoSubmitted,
+      );
+
   /// Records the submission-type body so both save and submit carry it.
   void setNote(String note) => _note = note;
+
+  /// Records the attachment list so both save and submit carry it — including
+  /// an auto-submit the student never taps.
+  void setFileIds(List<String> fileIds) =>
+      _fileIds = List<String>.unmodifiable(fileIds);
 
   /// Saves a submission-type draft — a free-text body rather than answers.
   Future<Failure?> flushDraftWithNote(String note) {
@@ -140,14 +175,7 @@ class AssessmentDetailCubit extends Cubit<RemoteState<AssessmentDetail>> {
     _isBusy = true;
 
     _autosave?.cancel();
-    final result = await _submitAttempt(
-      AttemptPayload(
-        assessmentId: assessmentId,
-        answers: draft.isEmpty ? null : _answersPayload(),
-        note: _note,
-        autoSubmitted: autoSubmitted,
-      ),
-    );
+    final result = await _submitAttempt(_payload(autoSubmitted: autoSubmitted));
     _isBusy = false;
 
     final failure = result.fold((f) => f, (_) => null);

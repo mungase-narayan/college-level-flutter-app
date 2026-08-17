@@ -15,4 +15,10 @@ class RewardsRepositoryImpl with RepositoryGuard implements RewardsRepository {
         await _service.recordDailyVisit();
         return unit;
       });
+
+  @override
+  Future<Either<Failure, Unit>> useTicket(String setId) => guard(() async {
+        await _service.useTicket(setId);
+        return unit;
+      });
 }

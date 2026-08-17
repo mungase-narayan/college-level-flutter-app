@@ -9,14 +9,30 @@ import '../../../features/auth/presentation/bloc/auth/auth_bloc.dart';
 import '../../../features/auth/presentation/pages/login_page.dart';
 import '../../../features/auth/presentation/pages/role_placeholder_page.dart';
 import '../../../features/assessments/presentation/bloc/assessment_detail_cubit.dart';
+import '../../../features/assessments/presentation/bloc/assignments_cubit.dart';
+import '../../../features/assessments/presentation/bloc/quizzes_cubit.dart';
 import '../../../features/assessments/presentation/pages/assessment_detail_page.dart';
+import '../../../features/calendar/presentation/bloc/calendar_cubit.dart';
+import '../../../features/calendar/presentation/bloc/today_sessions_cubit.dart';
+import '../../../features/calendar/presentation/pages/calendar_page.dart';
+import '../../../features/assessments/presentation/pages/assignments_page.dart';
+import '../../../features/assessments/presentation/pages/quizzes_page.dart';
 import '../../../features/auth/presentation/pages/set_password_page.dart';
 import '../../../features/courses/presentation/bloc/courses_cubit.dart';
 import '../../../features/courses/presentation/pages/course_detail_page.dart';
 import '../../../features/courses/presentation/pages/courses_page.dart';
 import '../../../features/dashboard/presentation/bloc/dashboard_cubit.dart';
 import '../../../features/dashboard/presentation/pages/dashboard_page.dart';
+import '../../../features/discussions/presentation/bloc/discussion_cubit.dart';
+import '../../../features/notes/domain/entities/note.dart';
+import '../../../features/notes/presentation/bloc/material_notes_cubit.dart';
+import '../../../features/practice/presentation/bloc/daily_challenge_cubit.dart';
+import '../../../features/practice/presentation/bloc/daily_solve_cubit.dart';
 import '../../../features/practice/presentation/bloc/practice_list_cubit.dart';
+import '../../../features/practice/presentation/bloc/practice_question_cubit.dart';
+import '../../../features/practice/presentation/pages/daily_challenge_page.dart';
+import '../../../features/practice/presentation/pages/daily_solve_page.dart';
+import '../../../features/practice/presentation/pages/practice_question_page.dart';
 import '../../../features/practice/presentation/pages/practice_page.dart';
 import '../../../features/profile/presentation/pages/profile_page.dart';
 import '../../../features/settings/presentation/pages/licenses_page.dart';
@@ -113,17 +129,26 @@ GoRouter createRouter(AuthBloc authBloc) {
           // ── Overview ──────────────────────────────────────────────────────
           GoRoute(
             path: StudentRoutes.dashboard,
-            builder: (_, _) => BlocProvider(
-              create: (_) => DashboardCubit(
-                getDailyChallenge: sl(),
-                getSummary: sl(),
-                getAnalytics: sl(),
-                getOverview: sl(),
-                getSemester: sl(),
-                getRating: sl(),
-                getLeaderboard: sl(),
-                getBadges: sl(),
-              ),
+            builder: (_, _) => MultiBlocProvider(
+              providers: [
+                BlocProvider(
+                  create: (_) => DashboardCubit(
+                    getDailyChallenge: sl(),
+                    getSummary: sl(),
+                    getAnalytics: sl(),
+                    getOverview: sl(),
+                    getSemester: sl(),
+                    getRating: sl(),
+                    getLeaderboard: sl(),
+                    getBadges: sl(),
+                  ),
+                ),
+                // Today's sessions reads the calendar, so it is its own cubit —
+                // a failure there must not take the dashboard down with it.
+                BlocProvider(
+                  create: (_) => TodaySessionsCubit(getCalendar: sl()),
+                ),
+              ],
               child: const DashboardPage(),
             ),
           ),
@@ -142,11 +167,19 @@ GoRouter createRouter(AuthBloc authBloc) {
               child: const CoursesPage(),
             ),
           ),
-          _pending(StudentRoutes.quiz, 'Quizzes', Icons.checklist_rounded),
-          _pending(
-            StudentRoutes.assignments,
-            'Assignments',
-            Icons.assignment_rounded,
+          GoRoute(
+            path: StudentRoutes.quiz,
+            builder: (_, _) => BlocProvider(
+              create: (_) => QuizzesCubit(listAll: sl(), listCourses: sl()),
+              child: const QuizzesPage(),
+            ),
+          ),
+          GoRoute(
+            path: StudentRoutes.assignments,
+            builder: (_, _) => BlocProvider(
+              create: (_) => AssignmentsCubit(listAll: sl(), listCourses: sl()),
+              child: const AssignmentsPage(),
+            ),
           ),
           GoRoute(
             path: StudentRoutes.practice,
@@ -154,14 +187,21 @@ GoRouter createRouter(AuthBloc authBloc) {
               create: (_) => PracticeListCubit(
                 listQuestions: sl(),
                 setBookmarked: sl(),
+                getFilters: sl(),
               ),
               child: const PracticePage(),
             ),
           ),
-          _pending(
-            StudentRoutes.dailyChallenge,
-            'Daily Challenge',
-            Icons.local_fire_department_rounded,
+          GoRoute(
+            path: StudentRoutes.dailyChallenge,
+            builder: (_, _) => BlocProvider(
+              create: (_) => DailyChallengeCubit(
+                getToday: sl(),
+                getCalendar: sl(),
+                getHistory: sl(),
+              ),
+              child: const DailyChallengePage(),
+            ),
           ),
           _pending(StudentRoutes.notes, 'Notes', Icons.sticky_note_2_rounded),
 
@@ -186,7 +226,20 @@ GoRouter createRouter(AuthBloc authBloc) {
             'Announcements',
             Icons.campaign_rounded,
           ),
-          _pending(StudentRoutes.calendar, 'Calendar', Icons.calendar_month_rounded),
+          GoRoute(
+            path: StudentRoutes.calendar,
+            builder: (_, state) => BlocProvider(
+              // `?date=YYYY-MM-DD` anchors the calendar on a given day — what a
+              // tapped session on the dashboard opens.
+              create: (_) => CalendarCubit(
+                getCalendar: sl(),
+                today: DateTime.tryParse(
+                  state.uri.queryParameters['date'] ?? '',
+                ),
+              ),
+              child: const CalendarPage(),
+            ),
+          ),
           _pending(
             StudentRoutes.attendance,
             'Attendance',
@@ -225,6 +278,71 @@ GoRouter createRouter(AuthBloc authBloc) {
         builder: (context, state) =>
             _assessmentDetail(state.pathParameters['assessmentId']!, 'Quiz'),
       ),
+      // One day's challenge — full-screen for the same reason the practice
+      // workspace is.
+      GoRoute(
+        path: '${StudentRoutes.dailyChallenge}/:date',
+        parentNavigatorKey: rootKey,
+        builder: (context, state) => BlocProvider(
+          create: (_) => DailySolveCubit(
+            getByDate: sl(),
+            getAttempts: sl(),
+            submitAnswer: sl(),
+            runCode: sl(),
+            runCustom: sl(),
+            useTicket: sl(),
+            date: state.pathParameters['date']!,
+          ),
+          child: const DailySolvePage(),
+        ),
+      ),
+
+      // The solve workspace: full-screen so the editor and the test-case output
+      // get the whole display, and so the floating capsule cannot sit on top of
+      // the Submit button.
+      GoRoute(
+        path: '${StudentRoutes.practice}/:questionId',
+        parentNavigatorKey: rootKey,
+        builder: (context, state) {
+          final questionId = state.pathParameters['questionId']!;
+          return MultiBlocProvider(
+            providers: [
+              BlocProvider(
+                create: (_) => PracticeQuestionCubit(
+                  getQuestion: sl(),
+                  getAttempts: sl(),
+                  submitAnswer: sl(),
+                  runCode: sl(),
+                  runCustom: sl(),
+                  navigate: sl(),
+                  setBookmarked: sl(),
+                  questionId: questionId,
+                ),
+              ),
+              BlocProvider(
+                create: (_) => DiscussionCubit(
+                  list: sl(),
+                  post: sl(),
+                  edit: sl(),
+                  remove: sl(),
+                  react: sl(),
+                  questionId: questionId,
+                ),
+              ),
+              // The Notes tab is scoped by the link this cubit carries.
+              BlocProvider(
+                create: (_) => MaterialNotesCubit(
+                  list: sl(),
+                  create: sl(),
+                  link: NoteLinkContext(questionId: questionId),
+                ),
+              ),
+            ],
+            child: const PracticeQuestionPage(),
+          );
+        },
+      ),
+
       // Full-screen above the shell: it is a long read, and the floating capsule
       // would otherwise sit on top of the licence text.
       GoRoute(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/common/widgets/widgets.dart';
 import '../../../../core/config/theme/app_colors.dart';
@@ -7,6 +8,7 @@ import '../../../../core/config/theme/app_theme.dart';
 import '../../../../core/design/extensions/glass_context.dart';
 import '../../../../core/network/api_response.dart';
 import '../../../shell/presentation/pages/student_shell.dart';
+import '../../../shell/presentation/widgets/student_nav.dart';
 import '../../domain/entities/practice_question.dart';
 import '../../domain/usecases/practice_usecases.dart';
 import '../bloc/practice_list_cubit.dart';
@@ -24,10 +26,26 @@ class PracticePage extends StatefulWidget {
 }
 
 class _PracticePageState extends State<PracticePage> {
+  /// What the open filter sheet has staged so far.
+  ///
+  /// Owned by the page rather than by the sheet because the sheet's header
+  /// actions need it too, and they are siblings of the sheet's body rather than
+  /// descendants of it. Kept for the page's lifetime instead of one per opening,
+  /// so it is never disposed while the sheet is still animating out.
+  final _filterDraft = ValueNotifier(
+    const _PracticeFilters(sort: _PracticeFilters.defaultSort),
+  );
+
   @override
   void initState() {
     super.initState();
     context.read<PracticeListCubit>().load();
+  }
+
+  @override
+  void dispose() {
+    _filterDraft.dispose();
+    super.dispose();
   }
 
   /// Opens the filter sheet and commits the result.
@@ -37,17 +55,26 @@ class _PracticePageState extends State<PracticePage> {
   /// button they cost nothing until asked for, and the badge keeps the current
   /// state visible.
   Future<void> _openFilters(PracticeListCubit cubit) async {
+    // Fetched here rather than on page load: only the sheet needs the course
+    // list, and most visits never open it.
+    final courses = await cubit.courseOptions();
+    if (!mounted) return;
+
+    // Each opening starts from what is actually applied, so a sheet that was
+    // dismissed without applying leaves nothing behind.
+    _filterDraft.value = _PracticeFilters.from(cubit.query);
     final applied = await showAppSheet<_PracticeFilters>(
       context,
       title: 'Filters',
-      builder: (context) => _FilterSheet(
-        initial: _PracticeFilters.from(cubit.query),
-      ),
+      builder: (context) => _FilterSheet(draft: _filterDraft, courses: courses),
     );
     if (applied == null || !mounted) return;
 
-    // One request for all three, rather than one per setter.
+    // One request for every filter, rather than one per setter.
     await cubit.setFilters(
+      type: applied.type,
+      courseId: applied.courseId,
+      bookmarked: applied.bookmarked,
       sort: applied.sort,
       attemptStatus: applied.attemptStatus,
       difficulty: applied.difficulty,
@@ -121,10 +148,19 @@ class _PracticePageState extends State<PracticePage> {
                             hasMore: cubit.hasMore,
                           );
                         }
+                        final question = page.items[index];
                         return _QuestionCard(
-                          question: page.items[index],
-                          onToggleBookmark: () =>
-                              cubit.toggleBookmark(page.items[index]),
+                          question: question,
+                          onToggleBookmark: () => cubit.toggleBookmark(question),
+                          // Opens the solve workspace, then reloads: an attempt
+                          // made in there changes this card's status line.
+                          onTap: () async {
+                            await context
+                                .push(StudentRoutes.practiceQuestion(question.id));
+                            if (context.mounted) {
+                              await cubit.load(refresh: true);
+                            }
+                          },
                         );
                       },
                     ),
@@ -146,17 +182,28 @@ class _PracticeFilters {
     required this.sort,
     this.attemptStatus,
     this.difficulty,
+    this.type,
+    this.courseId,
+    this.bookmarked = false,
   });
 
   factory _PracticeFilters.from(PracticeQueryParams query) => _PracticeFilters(
         sort: query.sort,
         attemptStatus: query.attemptStatus,
         difficulty: query.difficulty,
+        type: query.type,
+        courseId: query.courseId,
+        bookmarked: query.bookmarked == true,
       );
 
   final String sort;
   final String? attemptStatus;
   final String? difficulty;
+  final String? type;
+  final String? courseId;
+
+  /// One-way, like the web's: the endpoint has no "not bookmarked" mode.
+  final bool bookmarked;
 
   static const defaultSort = 'recent';
 
@@ -164,20 +211,31 @@ class _PracticeFilters {
   int get activeCount =>
       (sort != defaultSort ? 1 : 0) +
       (attemptStatus != null ? 1 : 0) +
-      (difficulty != null ? 1 : 0);
+      (difficulty != null ? 1 : 0) +
+      (type != null ? 1 : 0) +
+      (courseId != null ? 1 : 0) +
+      (bookmarked ? 1 : 0);
 
   _PracticeFilters copyWith({
     String? sort,
     String? attemptStatus,
     String? difficulty,
+    String? type,
+    String? courseId,
+    bool? bookmarked,
     bool clearAttemptStatus = false,
     bool clearDifficulty = false,
+    bool clearType = false,
+    bool clearCourse = false,
   }) =>
       _PracticeFilters(
         sort: sort ?? this.sort,
         attemptStatus:
             clearAttemptStatus ? null : (attemptStatus ?? this.attemptStatus),
         difficulty: clearDifficulty ? null : (difficulty ?? this.difficulty),
+        type: clearType ? null : (type ?? this.type),
+        courseId: clearCourse ? null : (courseId ?? this.courseId),
+        bookmarked: bookmarked ?? this.bookmarked,
       );
 }
 
@@ -237,130 +295,215 @@ class _FilterButton extends StatelessWidget {
 
 /// Sort, status and difficulty in one sheet.
 ///
-/// Selections are staged locally and committed on Apply, so a request is not sent
-/// per tap while the sheet is open and the user can back out with no side effects.
-class _FilterSheet extends StatefulWidget {
-  const _FilterSheet({required this.initial});
+/// Selections are staged in [draft] and committed by the sheet header's Apply
+/// action, so a request is not sent per tap while the sheet is open and the user
+/// can back out — with Cancel, a swipe down, or a tap outside — with no side
+/// effects.
+///
+/// Laid out as three inset-grouped checkmark lists rather than as rows of pill
+/// chips. Each of these filters is a pick-one, which is what a checkmark list
+/// says and a row of chips does not: chips read as independent toggles, and
+/// wrapping them into ragged lines made the three groups hard to tell apart at a
+/// glance.
+class _FilterSheet extends StatelessWidget {
+  const _FilterSheet({required this.draft, required this.courses});
 
-  final _PracticeFilters initial;
+  final ValueNotifier<_PracticeFilters> draft;
 
-  @override
-  State<_FilterSheet> createState() => _FilterSheetState();
-}
-
-class _FilterSheetState extends State<_FilterSheet> {
-  late _PracticeFilters _draft = widget.initial;
+  /// Empty when the filter endpoint could not be reached — the group is then
+  /// hidden rather than shown with nothing in it.
+  final List<PracticeSubject> courses;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    Widget section(String label, Widget chips) => Padding(
-          padding: const EdgeInsets.only(bottom: 18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: theme.textTheme.labelMedium),
-              const SizedBox(height: 10),
-              chips,
+    return ValueListenableBuilder<_PracticeFilters>(
+      valueListenable: draft,
+      builder: (context, value, _) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AppOptionGroup<String>(
+            header: 'Sort by',
+            selected: value.sort,
+            onSelected: (sort) => draft.value = value.copyWith(sort: sort),
+            options: const [
+              AppOptionItem(
+                value: 'recent',
+                label: 'Most recent',
+                icon: Icons.schedule_rounded,
+              ),
+              AppOptionItem(
+                value: 'popular',
+                label: 'Most attempted',
+                icon: Icons.local_fire_department_outlined,
+              ),
+              AppOptionItem(
+                value: 'difficulty',
+                label: 'Difficulty',
+                icon: Icons.signal_cellular_alt_rounded,
+              ),
             ],
           ),
-        );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        section(
-          'Sort by',
-          AppFilterChips<String>(
-            wrap: true,
-            selected: _draft.sort,
-            onSelected: (value) => setState(
-              () => _draft = _draft.copyWith(sort: value),
+          AppOptionGroup<String?>(
+            header: 'Status',
+            selected: value.attemptStatus,
+            onSelected: (status) => draft.value = value.copyWith(
+              attemptStatus: status,
+              clearAttemptStatus: status == null,
             ),
             options: const [
-              AppFilterChipOption(value: 'recent', label: 'Most recent'),
-              AppFilterChipOption(value: 'popular', label: 'Most attempted'),
-              AppFilterChipOption(value: 'difficulty', label: 'Difficulty'),
+              AppOptionItem(
+                value: null,
+                label: 'All questions',
+                icon: Icons.apps_rounded,
+              ),
+              AppOptionItem(
+                value: 'not_attempted',
+                label: 'Unattempted',
+                icon: Icons.radio_button_unchecked_rounded,
+              ),
+              AppOptionItem(
+                value: 'solved',
+                label: 'Solved',
+                icon: Icons.check_circle_outline_rounded,
+              ),
+              AppOptionItem(
+                value: 'incorrect',
+                label: 'Incorrect',
+                icon: Icons.cancel_outlined,
+              ),
             ],
           ),
-        ),
-        section(
-          'Status',
-          AppFilterChips<String?>(
-            wrap: true,
-            selected: _draft.attemptStatus,
-            onSelected: (value) => setState(
-              () => _draft = _draft.copyWith(
-                attemptStatus: value,
-                clearAttemptStatus: value == null,
-              ),
+          AppOptionGroup<String?>(
+            header: 'Difficulty',
+            selected: value.difficulty,
+            onSelected: (difficulty) => draft.value = value.copyWith(
+              difficulty: difficulty,
+              clearDifficulty: difficulty == null,
             ),
             options: const [
-              AppFilterChipOption(value: null, label: 'All'),
-              AppFilterChipOption(value: 'not_attempted', label: 'Unattempted'),
-              AppFilterChipOption(value: 'solved', label: 'Solved'),
-              AppFilterChipOption(value: 'incorrect', label: 'Incorrect'),
+              AppOptionItem(
+                value: null,
+                label: 'Any difficulty',
+                icon: Icons.apps_rounded,
+              ),
+              AppOptionItem(
+                value: 'easy',
+                label: 'Easy',
+                icon: Icons.sentiment_satisfied_outlined,
+              ),
+              AppOptionItem(
+                value: 'medium',
+                label: 'Medium',
+                icon: Icons.sentiment_neutral_outlined,
+              ),
+              AppOptionItem(
+                value: 'hard',
+                label: 'Hard',
+                icon: Icons.whatshot_outlined,
+              ),
             ],
           ),
-        ),
-        section(
-          'Difficulty',
-          AppFilterChips<String?>(
-            wrap: true,
-            selected: _draft.difficulty,
-            onSelected: (value) => setState(
-              () => _draft = _draft.copyWith(
-                difficulty: value,
-                clearDifficulty: value == null,
-              ),
+          AppOptionGroup<String?>(
+            header: 'Type',
+            selected: value.type,
+            onSelected: (type) => draft.value = value.copyWith(
+              type: type,
+              clearType: type == null,
             ),
             options: const [
-              AppFilterChipOption(value: null, label: 'Any difficulty'),
-              AppFilterChipOption(value: 'easy', label: 'Easy'),
-              AppFilterChipOption(value: 'medium', label: 'Medium'),
-              AppFilterChipOption(value: 'hard', label: 'Hard'),
+              AppOptionItem(
+                value: null,
+                label: 'Any type',
+                icon: Icons.apps_rounded,
+              ),
+              AppOptionItem(
+                value: 'mcq',
+                label: 'MCQ',
+                icon: Icons.checklist_rounded,
+              ),
+              AppOptionItem(
+                value: 'true_false',
+                label: 'True / False',
+                icon: Icons.toggle_on_outlined,
+              ),
+              AppOptionItem(
+                value: 'subjective',
+                label: 'Subjective',
+                icon: Icons.notes_rounded,
+              ),
+              AppOptionItem(
+                value: 'coding',
+                label: 'Coding',
+                icon: Icons.code_rounded,
+              ),
             ],
           ),
-        ),
-        Row(
-          children: [
-            Expanded(
-              child: AppButton(
-                label: 'Reset',
-                variant: AppButtonVariant.outline,
-                expand: true,
-                // Disabled at defaults, so the button never implies there is
-                // something to clear when there is not.
-                onPressed: _draft.activeCount == 0
-                    ? null
-                    : () => setState(
-                          () => _draft = const _PracticeFilters(
-                            sort: _PracticeFilters.defaultSort,
-                          ),
-                        ),
+          if (courses.isNotEmpty)
+            AppOptionGroup<String?>(
+              header: 'Course',
+              selected: value.courseId,
+              onSelected: (courseId) => draft.value = value.copyWith(
+                courseId: courseId,
+                clearCourse: courseId == null,
               ),
+              options: [
+                const AppOptionItem(
+                  value: null,
+                  label: 'All courses',
+                  icon: Icons.apps_rounded,
+                ),
+                for (final course in courses)
+                  AppOptionItem(
+                    value: course.id,
+                    label: course.name,
+                    description: course.code.isEmpty ? null : course.code,
+                  ),
+              ],
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: AppButton(
-                label: 'Apply',
-                expand: true,
-                onPressed: () => Navigator.of(context).pop(_draft),
+          AppOptionGroup<bool>(
+            header: 'Saved',
+            selected: value.bookmarked,
+            onSelected: (bookmarked) =>
+                draft.value = value.copyWith(bookmarked: bookmarked),
+            options: const [
+              AppOptionItem(
+                value: false,
+                label: 'All questions',
+                icon: Icons.apps_rounded,
               ),
-            ),
-          ],
-        ),
-      ],
+              AppOptionItem(
+                value: true,
+                label: 'Bookmarked only',
+                icon: Icons.bookmark_outline_rounded,
+              ),
+            ],
+          ),
+          AppFilterActions(
+            // Disabled at defaults, so the button never implies there is
+            // something to clear when there is not.
+            onReset: value.activeCount == 0
+                ? null
+                : () => draft.value = const _PracticeFilters(
+                      sort: _PracticeFilters.defaultSort,
+                    ),
+            onApply: () => Navigator.of(context).pop(value),
+          ),
+        ],
+      ),
     );
   }
 }
 
 class _QuestionCard extends StatelessWidget {
-  const _QuestionCard({required this.question, required this.onToggleBookmark});
+  const _QuestionCard({
+    required this.question,
+    required this.onToggleBookmark,
+    required this.onTap,
+  });
 
   final PracticeQuestionListItem question;
   final VoidCallback onToggleBookmark;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -376,7 +519,7 @@ class _QuestionCard extends StatelessWidget {
     };
 
     return AppCard(
-      // The solve workspace is a later pass; the card is informational for now.
+      onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

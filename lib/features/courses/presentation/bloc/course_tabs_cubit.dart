@@ -15,6 +15,7 @@ class CourseAssessmentsCubit extends Cubit<RemoteState<List<StudentAssessment>>>
     required ListCourseAssessmentsUseCase listAssessments,
     required this.courseId,
     required this.category,
+    this.courseMaterialId,
   })  : _listAssessments = listAssessments,
         super(const RemoteState());
 
@@ -25,6 +26,10 @@ class CourseAssessmentsCubit extends Cubit<RemoteState<List<StudentAssessment>>>
   /// the Quiz tab.
   final String? category;
 
+  /// Set by the material page's Assignments tab to narrow the list to the
+  /// assignments published against that one material.
+  final String? courseMaterialId;
+
   Future<void> load({bool refresh = false}) async {
     if (isClosed) return;
     emit(state.copyWith(
@@ -34,7 +39,11 @@ class CourseAssessmentsCubit extends Cubit<RemoteState<List<StudentAssessment>>>
     ));
 
     final result = await _listAssessments(
-      CourseAssessmentParams(courseId: courseId, category: category),
+      CourseAssessmentParams(
+        courseId: courseId,
+        category: category,
+        courseMaterialId: courseMaterialId,
+      ),
     );
     if (isClosed) return;
 

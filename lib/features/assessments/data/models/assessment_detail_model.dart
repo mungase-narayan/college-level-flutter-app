@@ -162,6 +162,7 @@ class AttemptSubmissionModel extends AttemptSubmission {
     super.isLate,
     super.violationCount,
     super.autoSubmitted,
+    super.fileIds,
   });
 
   factory AttemptSubmissionModel.fromJson(Map<String, dynamic> json) =>
@@ -180,5 +181,7 @@ class AttemptSubmissionModel extends AttemptSubmission {
         isLate: json['isLate'] as bool? ?? false,
         violationCount: _int(json['violationCount']),
         autoSubmitted: json['autoSubmitted'] as bool? ?? false,
+        // Null rather than `[]` when the student attached nothing.
+        fileIds: _strings(json['fileIds']),
       );
 }

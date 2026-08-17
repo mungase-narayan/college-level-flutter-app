@@ -1,10 +1,12 @@
 import '../../../../core/common/widgets/heatmap_grid.dart';
 import '../../domain/entities/daily_challenge.dart';
+import '../../domain/entities/practice_attempt.dart';
 import '../../domain/entities/practice_question.dart';
 import '../../domain/entities/practice_summary.dart';
 
 int _int(Object? value, [int fallback = 0]) => (value as num?)?.toInt() ?? fallback;
 int? _intOrNull(Object? value) => (value as num?)?.toInt();
+double? _doubleOrNull(Object? value) => (value as num?)?.toDouble();
 Map<String, dynamic> _map(Object? value) =>
     value is Map<String, dynamic> ? value : const {};
 List<Map<String, dynamic>> _maps(Object? value) =>
@@ -201,6 +203,10 @@ class PracticeQuestionModel extends PracticeQuestion {
     super.languageTemplates,
     super.moduleName,
     super.topicName,
+    super.answers,
+    super.explanation,
+    super.modelAnswer,
+    super.hints,
   });
 
   factory PracticeQuestionModel.fromJson(Map<String, dynamic> json) =>
@@ -229,6 +235,12 @@ class PracticeQuestionModel extends PracticeQuestion {
         languageTemplates: _templates(json['languageTemplates']),
         moduleName: json['moduleName'] as String?,
         topicName: json['topicName'] as String?,
+        // Present only on the review payloads (`/attempts`, `/submit`); the
+        // plain detail fetch sanitises all four away.
+        answers: json['answers'] == null ? null : _strings(json['answers']),
+        explanation: json['explanation'] as String?,
+        modelAnswer: json['modelAnswer'] as String?,
+        hints: _strings(json['hints']),
       );
 
   /// `options` is jsonb, so it may be a list of objects or — for a hand-authored
@@ -252,11 +264,36 @@ class PracticeQuestionModel extends PracticeQuestion {
     return result;
   }
 
-  static Map<String, String> _templates(Object? value) {
-    if (value is! Map) return const {};
-    return {
-      for (final entry in value.entries) '${entry.key}': '${entry.value ?? ''}',
-    };
+  /// `languageTemplates` is a **list** of template objects on the wire — this
+  /// used to be read as a `{language: code}` map, which silently matched
+  /// nothing and left every coding question without its starter code.
+  ///
+  /// A hand-authored question may still carry the map form, so both are
+  /// accepted. `solutionCode` is present in the payload and deliberately not
+  /// read: the backend does not strip it, and the student must not be handed
+  /// the answer.
+  static List<QuestionLanguageTemplate> _templates(Object? value) {
+    if (value is List) {
+      return [
+        for (final entry in value.whereType<Map>())
+          if ('${entry['language'] ?? ''}'.isNotEmpty)
+            QuestionLanguageTemplate(
+              language: '${entry['language']}',
+              starterCode: entry['starterCode'] as String?,
+              placeholderCode: entry['placeholderCode'] as String?,
+            ),
+      ];
+    }
+    if (value is Map) {
+      return [
+        for (final entry in value.entries)
+          QuestionLanguageTemplate(
+            language: '${entry.key}',
+            starterCode: '${entry.value ?? ''}',
+          ),
+      ];
+    }
+    return const [];
   }
 }
 
@@ -287,7 +324,151 @@ class PracticeQuestionDetailModel extends PracticeQuestionDetail {
       );
 }
 
+// ── Attempts, runs and submissions ──────────────────────────────────────────
+
+class PracticeAttemptModel extends PracticeAttempt {
+  const PracticeAttemptModel({
+    required super.id,
+    required super.questionId,
+    required super.questionType,
+    required super.attempt,
+    required super.status,
+    super.isCorrect,
+    super.score,
+    super.maxScore,
+    super.pointsAwarded,
+    super.selectedAnswers,
+    super.answerText,
+    super.attachments,
+    super.code,
+    super.language,
+    super.studentNote,
+    super.feedback,
+    super.codingResult,
+    super.timeTakenSec,
+    super.submittedAt,
+  });
+
+  factory PracticeAttemptModel.fromJson(Map<String, dynamic> json) =>
+      PracticeAttemptModel(
+        id: json['id'] as String? ?? '',
+        questionId: json['questionId'] as String? ?? '',
+        questionType: json['questionType'] as String? ?? 'mcq',
+        attempt: _int(json['attempt'], 1),
+        status: json['status'] as String? ?? 'evaluated',
+        // Null is meaningful: an attempt awaiting review is not a wrong one.
+        isCorrect: json['isCorrect'] as bool?,
+        score: _intOrNull(json['score']),
+        maxScore: _intOrNull(json['maxScore']),
+        pointsAwarded: _int(json['pointsAwarded']),
+        selectedAnswers: _strings(json['selectedAnswers']),
+        answerText: json['answerText'] as String?,
+        attachments: _strings(json['attachments']),
+        code: json['code'] as String?,
+        language: json['language'] as String?,
+        studentNote: json['studentNote'] as String?,
+        feedback: json['feedback'] as String?,
+        codingResult: json['codingResult'] == null
+            ? null
+            : codingResultFromJson(_map(json['codingResult'])),
+        timeTakenSec: _intOrNull(json['timeTakenSec']),
+        submittedAt: json['submittedAt'] as String?,
+      );
+}
+
+PracticeCodingResult codingResultFromJson(Map<String, dynamic> json) =>
+    PracticeCodingResult(
+      passed: _int(json['passed']),
+      total: _int(json['total']),
+      compileError: json['compileError'] as bool? ?? false,
+      allPassed: json['allPassed'] as bool? ?? false,
+      failureReason: json['failureReason'] as String?,
+      cases: _maps(json['cases'])
+          .map(
+            (row) => PracticeCaseResult(
+              testCaseId: row['testCaseId'] as String? ?? '',
+              status: row['status'] as String? ?? 'Unknown',
+              passed: row['passed'] as bool? ?? false,
+              isSample: row['isSample'] as bool? ?? false,
+              timeSec: _doubleOrNull(row['timeSec']),
+              memoryKb: _intOrNull(row['memoryKb']),
+              // Populated for sample cases only; a hidden case reports nothing
+              // but its verdict.
+              stdin: row['stdin'] as String?,
+              stdout: row['stdout'] as String?,
+              stderr: row['stderr'] as String?,
+              expectedOutput: row['expectedOutput'] as String?,
+            ),
+          )
+          .toList(growable: false),
+    );
+
+PracticeCustomRunResult customRunFromJson(Map<String, dynamic> json) =>
+    PracticeCustomRunResult(
+      status: json['status'] as String? ?? 'Unknown',
+      compileError: json['compileError'] as bool? ?? false,
+      stdout: json['stdout'] as String?,
+      stderr: json['stderr'] as String?,
+      timeSec: _doubleOrNull(json['timeSec']),
+      memoryKb: _intOrNull(json['memoryKb']),
+    );
+
+PracticeAttemptHistory attemptHistoryFromJson(Map<String, dynamic> json) =>
+    PracticeAttemptHistory(
+      question: PracticeQuestionModel.fromJson(_map(json['question'])),
+      attempts: _maps(json['attempts'])
+          .map(PracticeAttemptModel.fromJson)
+          .toList(growable: false),
+    );
+
+PracticeSubmitResult submitResultFromJson(Map<String, dynamic> json) =>
+    PracticeSubmitResult(
+      attempt: PracticeAttemptModel.fromJson(_map(json['submission'])),
+      question: PracticeQuestionModel.fromJson(_map(json['question'])),
+    );
+
+PracticeFilterOptions filterOptionsFromJson(Map<String, dynamic> json) =>
+    PracticeFilterOptions(
+      subjects: _maps(json['subjects'])
+          .map(
+            (row) => PracticeSubject(
+              id: row['id'] as String? ?? '',
+              name: row['name'] as String? ?? '',
+              code: row['code'] as String? ?? '',
+            ),
+          )
+          .toList(growable: false),
+      modules: _strings(json['modules']),
+      topics: _strings(json['topics']),
+    );
+
 // ── Daily challenge ─────────────────────────────────────────────────────────
+
+DailyCalendar dailyCalendarFromJson(Map<String, dynamic> json) => DailyCalendar(
+      month: json['month'] as String? ?? '',
+      days: _maps(json['days'])
+          .map(DailyChallengeDayModel.fromJson)
+          .toList(growable: false),
+      summary: _calendarSummary(_map(json['summary'])),
+    );
+
+DailyCalendarSummary _calendarSummary(Map<String, dynamic> json) =>
+    DailyCalendarSummary(
+      daysInMonth: _int(json['daysInMonth']),
+      postedCount: _int(json['postedCount']),
+      completedCount: _int(json['completedCount']),
+      perfect: json['perfect'] as bool? ?? false,
+      isClosed: json['isClosed'] as bool? ?? false,
+    );
+
+DailyChallengeSubmitResult dailySubmitResultFromJson(Map<String, dynamic> json) =>
+    DailyChallengeSubmitResult(
+      attempt: PracticeAttemptModel.fromJson(_map(json['submission'])),
+      question: PracticeQuestionModel.fromJson(_map(json['question'])),
+      completion: json['completion'] == null
+          ? null
+          : DailyChallengeModel.completionFromJson(_map(json['completion'])),
+    );
 
 class DailyChallengeModel extends DailyChallenge {
   const DailyChallengeModel({
@@ -311,7 +492,9 @@ class DailyChallengeModel extends DailyChallenge {
             .map(PracticeQuestionModel.fromJson)
             .toList(growable: false),
         completion:
-            json['completion'] == null ? null : _completion(_map(json['completion'])),
+            json['completion'] == null
+                ? null
+                : completionFromJson(_map(json['completion'])),
         availableTickets: _int(json['availableTickets']),
         timeTravelUnlocked: json['timeTravelUnlocked'] as bool? ?? false,
       );
@@ -335,7 +518,7 @@ class DailyChallengeModel extends DailyChallenge {
         status: json['status'] as String?,
       );
 
-  static DailyChallengeCompletion _completion(Map<String, dynamic> json) =>
+  static DailyChallengeCompletion completionFromJson(Map<String, dynamic> json) =>
       DailyChallengeCompletion(
         status: json['status'] as String? ?? 'in_progress',
         totalQuestions: _int(json['totalQuestions']),

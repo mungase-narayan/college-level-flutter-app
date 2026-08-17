@@ -71,6 +71,8 @@ Future<T?> showAppSheet<T>(
   required WidgetBuilder builder,
   String? subtitle,
   bool isScrollControlled = true,
+  Widget? leading,
+  Widget? trailing,
 }) {
   if (context.useGlass) {
     return showLiquidGlassSheet<T>(
@@ -79,6 +81,8 @@ Future<T?> showAppSheet<T>(
       subtitle: subtitle,
       builder: builder,
       isScrollControlled: isScrollControlled,
+      leading: leading,
+      trailing: trailing,
     );
   }
 
@@ -88,6 +92,7 @@ Future<T?> showAppSheet<T>(
     useSafeArea: true,
     builder: (context) {
       final theme = Theme.of(context);
+      final hasActions = leading != null || trailing != null;
       return Padding(
         // Lift the sheet above the keyboard.
         padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
@@ -99,19 +104,59 @@ Future<T?> showAppSheet<T>(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: theme.textTheme.titleMedium),
-                    if (subtitle != null) ...[
-                      const SizedBox(height: 2),
-                      Text(subtitle, style: theme.textTheme.bodySmall),
+              if (hasActions)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+                  child: Row(
+                    children: [
+                      // Both ends are held even when only one action was given,
+                      // so the title sits in the middle either way.
+                      SizedBox(width: 96, child: leading),
+                      Expanded(
+                        child: Column(
+                          children: [
+                            Text(
+                              title,
+                              style: theme.textTheme.titleMedium,
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (subtitle != null)
+                              Text(
+                                subtitle,
+                                style: theme.textTheme.bodySmall,
+                                textAlign: TextAlign.center,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(
+                        width: 96,
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: trailing,
+                        ),
+                      ),
                     ],
-                  ],
+                  ),
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: theme.textTheme.titleMedium),
+                      if (subtitle != null) ...[
+                        const SizedBox(height: 2),
+                        Text(subtitle, style: theme.textTheme.bodySmall),
+                      ],
+                    ],
+                  ),
                 ),
-              ),
               const Divider(height: 1),
               Flexible(
                 child: SingleChildScrollView(
@@ -125,6 +170,51 @@ Future<T?> showAppSheet<T>(
       );
     },
   );
+}
+
+/// A text action for a sheet's header — the `Cancel` / `Apply` pair that sits on
+/// either side of the title.
+///
+/// Build it under a [Builder] so its `onPressed` can pop the sheet's own route:
+/// the sheet is pushed on the root navigator, so a callback closing over the
+/// *calling* screen's context would pop that screen instead.
+class AppSheetAction extends StatelessWidget {
+  const AppSheetAction({
+    super.key,
+    required this.label,
+    this.onPressed,
+    this.prominent = false,
+  });
+
+  final String label;
+  final VoidCallback? onPressed;
+
+  /// The confirming action of the pair — emphasised, as `Done` is on iOS.
+  final bool prominent;
+
+  @override
+  Widget build(BuildContext context) {
+    if (context.useGlass) {
+      return LiquidGlassSheetAction(
+        label: label,
+        onPressed: onPressed,
+        prominent: prominent,
+      );
+    }
+
+    return TextButton(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(
+        minimumSize: const Size(0, 44),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        textStyle: TextStyle(
+          fontSize: 15,
+          fontWeight: prominent ? FontWeight.w600 : FontWeight.w500,
+        ),
+      ),
+      child: Text(label),
+    );
+  }
 }
 
 /// A sheet whose body is a plain list of options — the mobile form of the
@@ -147,6 +237,7 @@ Future<T?> showAppOptionSheet<T>(
             label: option.label,
             description: option.description,
             icon: option.icon,
+            destructive: option.destructive,
           ),
       ],
     );
@@ -175,8 +266,18 @@ Future<T?> showAppOptionSheet<T>(
                 children: [
                   for (final option in options)
                     ListTile(
-                      leading: option.icon == null ? null : Icon(option.icon),
-                      title: Text(option.label, style: theme.textTheme.bodyMedium),
+                      leading: option.icon == null
+                          ? null
+                          : Icon(
+                              option.icon,
+                              color: option.destructive ? scheme.destructive : null,
+                            ),
+                      title: Text(
+                        option.label,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: option.destructive ? scheme.destructive : null,
+                        ),
+                      ),
                       subtitle: option.description == null
                           ? null
                           : Text(option.description!, style: theme.textTheme.bodySmall),
@@ -202,10 +303,14 @@ class AppSheetOption<T> {
     required this.label,
     this.description,
     this.icon,
+    this.destructive = false,
   });
 
   final T value;
   final String label;
   final String? description;
   final IconData? icon;
+
+  /// Renders the row in the destructive colour — a delete in an action list.
+  final bool destructive;
 }

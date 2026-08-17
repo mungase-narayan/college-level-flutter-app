@@ -43,3 +43,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Android Gradle build output (the root `/build/` rule does not reach it).
+android/build/
+
+# Flutter DevTools per-machine state.
+devtools_options.yaml

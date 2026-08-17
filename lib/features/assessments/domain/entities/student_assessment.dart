@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
 
-/// One row of `GET /student/assignments?courseId=…`.
+/// One row of `GET /student/assignments?courseId=…` — or of
+/// `GET /student/assignments/all`, which returns the same row plus [course] and
+/// [creator].
 ///
 /// The endpoint returns the whole `assessments` row plus `resultsPublished` and
 /// the student's latest [submission]. Omitting `category` excludes quizzes, so
@@ -23,6 +25,9 @@ class StudentAssessment extends Equatable {
     this.isProctored = false,
     this.durationMinutes,
     this.submission,
+    this.course,
+    this.creator,
+    this.fileIds = const [],
   });
 
   final String id;
@@ -49,6 +54,18 @@ class StudentAssessment extends Equatable {
 
   /// The student's latest attempt, or null if they've never started.
   final AssessmentSubmission? submission;
+
+  /// Which course this belongs to. Only the cross-course list carries it — in a
+  /// course's own tab the course is the page you are already on.
+  final AssessmentCourseRef? course;
+
+  /// The teacher who set it. Cross-course list only, and null when the server
+  /// cannot resolve the author.
+  final AssessmentCreatorRef? creator;
+
+  /// The brief the teacher attached — the question paper, a rubric, a starter
+  /// file. Empty for most assessments.
+  final List<String> fileIds;
 
   /// Which board section this belongs in — the port of `statusKeyOf`.
   String get statusKey => submission?.status ?? AssessmentStatus.notStarted;
@@ -96,8 +113,60 @@ class StudentAssessment extends Equatable {
     }
   }
 
+  // `endDate` and `resultsPublished` are in here alongside the obvious fields
+  // because both change *on their own*: a teacher extends a deadline or
+  // publishes results without anything else about the row moving. Leaving them
+  // out makes the refreshed list compare equal to the stale one, and bloc drops
+  // an emission equal to the current state — the card would keep the old due
+  // date until the page was rebuilt for some unrelated reason.
   @override
-  List<Object?> get props => [id, title, category, type, totalMarks, submission];
+  List<Object?> get props => [
+        id,
+        title,
+        category,
+        type,
+        totalMarks,
+        endDate,
+        resultsPublished,
+        submission,
+        course,
+        creator,
+        fileIds,
+      ];
+}
+
+/// The course an assessment belongs to, as the cross-course list carries it.
+class AssessmentCourseRef extends Equatable {
+  const AssessmentCourseRef({
+    required this.id,
+    required this.name,
+    required this.code,
+    this.colorCode,
+  });
+
+  final String id;
+  final String name;
+
+  /// The short code shown on the card's chip — `CS201`.
+  final String code;
+
+  /// The course's own colour, as `#RRGGBB`. Null for a course that has none, in
+  /// which case the chip falls back to a neutral tint.
+  final String? colorCode;
+
+  @override
+  List<Object?> get props => [id, name, code, colorCode];
+}
+
+/// The teacher who authored an assessment.
+class AssessmentCreatorRef extends Equatable {
+  const AssessmentCreatorRef({required this.name, this.avatar});
+
+  final String name;
+  final String? avatar;
+
+  @override
+  List<Object?> get props => [name, avatar];
 }
 
 class AssessmentSubmission extends Equatable {

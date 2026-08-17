@@ -5,84 +5,12 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 
 import '../../config/theme/app_theme.dart';
+import 'video_source.dart';
+import 'youtube_video_player.dart';
 
-/// How a video URL should be played.
-enum VideoKind {
-  /// A provider embed (YouTube, Vimeo) — what the web app puts in an `iframe`.
-  embed,
-
-  /// A direct video file, played by the platform's own `<video>` element.
-  file,
-
-  /// Not something we can preview.
-  invalid,
-}
-
-/// The result of parsing a course material's `videoUrl`.
-class VideoSource {
-  const VideoSource(this.kind, [this.src]);
-
-  final VideoKind kind;
-  final String? src;
-
-  static const _invalid = VideoSource(VideoKind.invalid);
-
-  /// Port of `parseVideoUrl` in `src/components/shared/video-preview.tsx`.
-  ///
-  /// Normalises watch/short/embed links to the provider's embed URL so the
-  /// player loads directly instead of the surrounding site chrome.
-  factory VideoSource.parse(String? raw) {
-    final url = (raw ?? '').trim();
-    if (url.isEmpty) return _invalid;
-
-    final parsed = Uri.tryParse(url);
-    if (parsed == null || !parsed.hasScheme) return _invalid;
-
-    final host = parsed.host.replaceFirst(RegExp(r'^www\.'), '');
-
-    // ── YouTube ───────────────────────────────────────────────────────────
-    if (host == 'youtube.com' || host == 'm.youtube.com') {
-      final v = parsed.queryParameters['v'];
-      if (v != null && v.isNotEmpty) {
-        return VideoSource(VideoKind.embed, 'https://www.youtube.com/embed/$v');
-      }
-      final match =
-          RegExp(r'/(embed|shorts)/([\w-]+)').firstMatch(parsed.path);
-      if (match != null) {
-        return VideoSource(
-          VideoKind.embed,
-          'https://www.youtube.com/embed/${match.group(2)}',
-        );
-      }
-    }
-    if (host == 'youtu.be') {
-      final id = parsed.path.replaceFirst('/', '');
-      if (id.isNotEmpty) {
-        return VideoSource(VideoKind.embed, 'https://www.youtube.com/embed/$id');
-      }
-    }
-
-    // ── Vimeo ─────────────────────────────────────────────────────────────
-    if (host == 'vimeo.com') {
-      final segments = parsed.pathSegments.where((s) => s.isNotEmpty).toList();
-      if (segments.isNotEmpty && RegExp(r'^\d+$').hasMatch(segments.first)) {
-        return VideoSource(
-          VideoKind.embed,
-          'https://player.vimeo.com/video/${segments.first}',
-        );
-      }
-    }
-    if (host == 'player.vimeo.com') return VideoSource(VideoKind.embed, url);
-
-    // ── Direct file ───────────────────────────────────────────────────────
-    if (RegExp(r'\.(mp4|webm|ogg|mov|m4v)$', caseSensitive: false)
-        .hasMatch(parsed.path)) {
-      return VideoSource(VideoKind.file, url);
-    }
-
-    return _invalid;
-  }
-}
+// Re-exported so the parser stays reachable from the widget that used to own
+// it: call sites and tests import this file, not the split.
+export 'video_source.dart';
 
 /// Port of the shared `VideoPreview` — plays a course material's video inline.
 ///
@@ -210,6 +138,15 @@ class _VideoPreviewState extends State<VideoPreview> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = context.scheme;
+
+    // YouTube goes to the IFrame player rather than through this WebView. Its
+    // embed refuses to play inside a hand-rolled HTML document — see
+    // `YouTubeVideoPlayer` — and routing it here rather than at each call site
+    // means the material's Video tab and every markdown video block get the
+    // working player without any of them knowing which provider a link is for.
+    if (_source.youtubeId != null) {
+      return YouTubeVideoPlayer(videoUrl: widget.url);
+    }
 
     if (_source.kind == VideoKind.invalid || _controller == null) {
       return Container(

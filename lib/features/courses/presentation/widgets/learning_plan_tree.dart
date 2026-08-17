@@ -3,13 +3,16 @@ import 'package:flutter/material.dart';
 import '../../../../core/common/widgets/widgets.dart';
 import '../../../../core/config/theme/app_theme.dart';
 import '../../domain/entities/course_tree.dart';
-import 'material_viewer_sheet.dart';
+import '../pages/material_detail_page.dart';
 
 /// Port of `student/courses/detail/learning-plan/index.tsx`.
 ///
 /// A three-level tree — module → topic → material. Modules start expanded and
 /// topics start collapsed, matching `ModuleRow` / `TopicRow`, so a course with
 /// twenty topics opens as a scannable outline rather than a wall of rows.
+///
+/// This is the sidebar half of the web's split view; tapping a material pushes
+/// [MaterialDetailPage], which is the content half.
 class LearningPlanTree extends StatelessWidget {
   const LearningPlanTree({
     super.key,
@@ -262,10 +265,10 @@ class _MaterialRow extends StatelessWidget {
     };
 
     return InkWell(
-      onTap: () => MaterialViewerSheet.show(
+      onTap: () => MaterialDetailPage.push(
         context,
-        material: material,
-        onToggleComplete: () => onToggle(material),
+        courseId: material.courseId,
+        materialId: material.id,
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 8, 10, 8),

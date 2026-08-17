@@ -18,4 +18,17 @@ class RewardsService {
   Future<void> recordDailyVisit() async {
     await _client.post(ApiUrls.rewardsVisit, parse: (_) => null);
   }
+
+  /// `POST /rewards/tickets/use` — spends one Time Travel Ticket to re-open a
+  /// daily challenge whose window has closed.
+  ///
+  /// The ticket is a paid item bought with coins, and the spend is immediate
+  /// and irreversible, so the caller confirms first.
+  Future<void> useTicket(String setId) async {
+    await _client.post(
+      ApiUrls.rewardsUseTicket,
+      body: {'setId': setId},
+      parse: (_) => null,
+    );
+  }
 }
