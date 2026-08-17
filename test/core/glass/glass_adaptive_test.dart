@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart'
     show TargetPlatform, debugDefaultTargetPlatformOverride;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 
 import 'package:college_level/core/common/widgets/widgets.dart';
 import 'package:college_level/core/config/theme/app_theme.dart';
@@ -15,6 +16,9 @@ import 'package:college_level/core/design/glass.dart';
 /// whenever `FLUTTER_TEST` is set, so the app's other suites take the Material
 /// branch automatically. Glass behaviour therefore has to be requested
 /// explicitly — which is precisely why `debugUseGlassOverride` exists.
+/// A nav bar needs an `onSelected`; these two tests never tap.
+void _ignoreIndex(int _) {}
+
 void main() {
   tearDown(() {
     // A leaked override would silently flip every later test in the run.
@@ -176,6 +180,86 @@ void main() {
       // filter per row.
       expect(find.byType(BackdropFilter), findsNothing);
     });
+
+    /// `BackdropFilter` alone stopped being enough to police this the moment
+    /// surfaces moved to `liquid_glass_renderer`: `FakeGlass` builds a
+    /// `BackdropFilterLayer` inside its own render object rather than using the
+    /// widget, so the assertion above would keep passing with the blur still on
+    /// screen. These name the package's widgets directly.
+    testWidgets('drops the package glass from every surface', (tester) async {
+      AppPlatform.debugUseGlassOverride = true;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: LiquidGlassTheme.dark,
+          home: GlassScope(
+            reduceTransparency: true,
+            child: Scaffold(
+              body: Column(
+                children: [
+                  LiquidGlassSearchBar(hint: 'Search', onChanged: (_) {}),
+                  const LiquidGlassButton(label: 'Primary'),
+                  const LiquidGlassButton(
+                    label: 'Glass',
+                    variant: GlassButtonVariant.glass,
+                  ),
+                  LiquidGlassFAB(icon: Icons.add_rounded, onPressed: () {}),
+                  const LiquidGlassNavigationBar(
+                    items: [
+                      GlassNavItem(label: 'Home', icon: Icons.home_rounded),
+                      GlassNavItem(label: 'Me', icon: Icons.person_rounded),
+                    ],
+                    currentIndex: 0,
+                    onSelected: _ignoreIndex,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.byType(FakeGlass), findsNothing);
+      expect(find.byType(LiquidGlass), findsNothing);
+      expect(find.byType(BackdropFilter), findsNothing);
+      // And the content is all still there — opaque, not removed.
+      expect(find.text('Primary'), findsOneWidget);
+      expect(find.text('Home'), findsOneWidget);
+    });
+
+    testWidgets('uses the package when transparency is allowed', (tester) async {
+      AppPlatform.debugUseGlassOverride = true;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: LiquidGlassTheme.dark,
+          home: GlassScope(
+            child: Scaffold(
+              body: Column(
+                children: [
+                  LiquidGlassSearchBar(hint: 'Search', onChanged: (_) {}),
+                  const LiquidGlassNavigationBar(
+                    items: [
+                      GlassNavItem(label: 'Home', icon: Icons.home_rounded),
+                      GlassNavItem(label: 'Me', icon: Icons.person_rounded),
+                    ],
+                    currentIndex: 0,
+                    onSelected: _ignoreIndex,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      // The field fakes it — nothing scrolls under a search row. The capsule
+      // floats over the page, so it gets the real renderer.
+      expect(find.byType(FakeGlass), findsWidgets);
+      expect(find.byType(LiquidGlass), findsOneWidget);
+    });
   });
 
   group('reduce motion', () {
@@ -237,6 +321,7 @@ void main() {
           tokens.overlay,
           tokens.raised,
           tokens.control,
+          tokens.field,
         ]) {
           expect(
             spec.toOpaque().tint.a,
@@ -362,12 +447,7 @@ void main() {
         GlassNavItem(label: 'More', icon: Icons.more_horiz_rounded),
       ];
 
-      Finder pill() => find
-          .descendant(
-            of: find.byType(LiquidGlassNavigationBar),
-            matching: find.byType(LiquidGlassContainer),
-          )
-          .last;
+      Finder pill() => find.byKey(LiquidGlassNavigationBar.pillKey);
 
       // Both interior slots — the two that sit clear of the rim, so the padding
       // is free to apply in full.
@@ -463,12 +543,10 @@ void main() {
           );
           await tester.pumpAndSettle();
 
-          final containers = find.descendant(
-            of: find.byType(LiquidGlassNavigationBar),
-            matching: find.byType(LiquidGlassContainer),
-          );
-          final capsule = tester.getRect(containers.first);
-          final pill = tester.getRect(containers.last);
+          final capsule =
+              tester.getRect(find.byKey(LiquidGlassNavigationBar.capsuleKey));
+          final pill =
+              tester.getRect(find.byKey(LiquidGlassNavigationBar.pillKey));
 
           const inset = GlassMetrics.navBarPillInset;
           final outward =
@@ -513,14 +591,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final pill = tester.getRect(
-        find
-            .descendant(
-              of: find.byType(LiquidGlassNavigationBar),
-              matching: find.byType(LiquidGlassContainer),
-            )
-            .last,
-      );
+      final pill =
+          tester.getRect(find.byKey(LiquidGlassNavigationBar.pillKey));
 
       expect(pill.left, greaterThan(tester.getRect(find.text('Home')).right));
       expect(
@@ -559,14 +631,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final pill = tester.getRect(
-        find
-            .descendant(
-              of: find.byType(LiquidGlassNavigationBar),
-              matching: find.byType(LiquidGlassContainer),
-            )
-            .last,
-      );
+      final pill =
+          tester.getRect(find.byKey(LiquidGlassNavigationBar.pillKey));
 
       expect(pill.center.dx, closeTo(tester.getCenter(find.text('Home')).dx, 0.5));
       expect(pill.width, greaterThanOrEqualTo(GlassMetrics.navBarPillMinWidth));
@@ -598,22 +664,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      Rect capsule() => tester.getRect(
-            find
-                .descendant(
-                  of: find.byType(LiquidGlassNavigationBar),
-                  matching: find.byType(LiquidGlassContainer),
-                )
-                .first,
-          );
-      Rect pill() => tester.getRect(
-            find
-                .descendant(
-                  of: find.byType(LiquidGlassNavigationBar),
-                  matching: find.byType(LiquidGlassContainer),
-                )
-                .last,
-          );
+      Rect capsule() =>
+          tester.getRect(find.byKey(LiquidGlassNavigationBar.capsuleKey));
+      Rect pill() =>
+          tester.getRect(find.byKey(LiquidGlassNavigationBar.pillKey));
 
       // Both directions: the overshoot only threatens the rim at the end the pill
       // is arriving at, so a one-way trip would miss half of it.
@@ -943,6 +997,42 @@ void main() {
 
         // Still enough body to read as a selected state at all.
         expect(glass.navPillTint.a, greaterThan(0.15));
+      }
+    });
+
+    /// The capsule's whole premise is that the frost, not the fill, is the
+    /// material — and that the pill stays obvious anyway. Both halves are stated
+    /// as invariants rather than left implicit in a hex value, because the failure
+    /// mode of nudging the tint up is a bar that looks fine in isolation and reads
+    /// as a solid slab the moment content runs under it.
+    test('the capsule is mostly frost, and the pill still reads on it', () {
+      for (final tokens in [GlassTokens.dark, GlassTokens.light]) {
+        final glass = ResolvedGlass(
+          tokens: tokens,
+          reduceTransparency: false,
+          reduceMotion: false,
+        );
+
+        expect(
+          glass.navBar.tint.a,
+          lessThan(0.30),
+          reason: 'the blur has to carry the material, not the tint',
+        );
+
+        // Composited rather than compared by alpha: the two tints are different
+        // colours over a shared backdrop, so in the dark scheme a white pill at
+        // 28% lifts far more than its four-point alpha lead over the capsule
+        // suggests. What has to hold in both schemes is that the pill comes out
+        // *lighter* than the bar it sits on.
+        const under = Color(0xFF7F7F84);
+        final pill = Color.alphaBlend(glass.navPillTint, under);
+        final bar = Color.alphaBlend(glass.navBar.tint, under);
+
+        expect(
+          pill.computeLuminance(),
+          greaterThan(bar.computeLuminance()),
+          reason: 'the selected tab must separate from the bar around it',
+        );
       }
     });
 
@@ -1550,6 +1640,117 @@ void main() {
       // And the value itself is still laid out, just ellipsised.
       expect(find.text('narayan.mungase@mitcorer.edu.in'), findsOneWidget);
       expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('LiquidGlassSearchBar', () {
+    /// Pumps the bar the way a page hosts it: in a row beside something else, at
+    /// a real phone width, so the Cancel button has to find its space by taking it
+    /// from the field rather than from the page.
+    Future<void> pumpBar(
+      WidgetTester tester, {
+      ValueChanged<String>? onChanged,
+    }) async {
+      AppPlatform.debugUseGlassOverride = true;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: LiquidGlassTheme.light,
+          home: GlassScope(
+            child: Scaffold(
+              body: Center(
+                child: SizedBox(
+                  width: 393,
+                  child: Row(
+                    key: const ValueKey('search-row'),
+                    children: [
+                      Expanded(
+                        child: LiquidGlassSearchBar(
+                          hint: 'Search quizzes',
+                          onChanged: onChanged ?? (_) {},
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Icon(Icons.tune_rounded),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('Cancel arrives with focus and leaves with it', (tester) async {
+      await pumpBar(tester);
+
+      expect(find.bySemanticsLabel('Cancel search'), findsNothing);
+
+      await tester.tap(find.byType(TextField));
+      await tester.pumpAndSettle();
+      expect(find.bySemanticsLabel('Cancel search'), findsOneWidget);
+
+      // Unfocusing with the field empty puts it away again.
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
+      expect(find.bySemanticsLabel('Cancel search'), findsNothing);
+    });
+
+    /// The affordance is a glyph, never the word — `screens_parity_test` asserts
+    /// no 'Cancel' text is on a page showing a search field, and the sheets own
+    /// that string.
+    testWidgets('Cancel is an icon, not a label', (tester) async {
+      await pumpBar(tester);
+      await tester.tap(find.byType(TextField));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Cancel'), findsNothing);
+      expect(find.byIcon(Icons.close_rounded), findsOneWidget);
+    });
+
+    /// The button is sized to fit inside the field's own height. If it ever grows
+    /// past it, every page hosting a search row shifts its content down the moment
+    /// the user taps the field — and the empty-state copy the parity suite looks
+    /// for goes under the fold.
+    testWidgets('focusing does not grow the row', (tester) async {
+      await pumpBar(tester);
+
+      // Keyed rather than `byType(Row).first`: focusing mounts the text-editing
+      // overlay, which puts its own Row ahead of this one in the tree.
+      const row = ValueKey('search-row');
+      final before = tester.getSize(find.byKey(row)).height;
+
+      await tester.tap(find.byType(TextField));
+      await tester.pumpAndSettle();
+
+      expect(tester.getSize(find.byKey(row)).height, before);
+    });
+
+    /// Cancelling is a decision, not a keystroke: it must not sit behind the
+    /// debounce that exists to swallow typing.
+    testWidgets('Cancel clears without waiting for the debounce',
+        (tester) async {
+      final seen = <String>[];
+      await pumpBar(tester, onChanged: seen.add);
+
+      await tester.enterText(find.byType(TextField), 'thermo');
+      // One frame to start Cancel's reveal, then long enough to finish it (300ms)
+      // while staying short of the 350ms debounce — the window this test is about.
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 310));
+      expect(seen, isEmpty, reason: 'typing is still debounced');
+
+      await tester.tap(find.bySemanticsLabel('Cancel search'));
+      await tester.pump();
+
+      expect(seen, ['']);
+      expect(find.text('thermo'), findsNothing);
+
+      // And the swallowed keystroke never lands afterwards.
+      await tester.pump(const Duration(seconds: 1));
+      expect(seen, ['']);
     });
   });
 

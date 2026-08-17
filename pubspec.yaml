@@ -70,6 +70,7 @@ dependencies:
   youtube_player_flutter: ^10.0.1
   pdf: ^3.13.0
   printing: ^5.15.0
+  liquid_glass_renderer: ^0.2.0-dev.4
 
 dev_dependencies:
   flutter_test:

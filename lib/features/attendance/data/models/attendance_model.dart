@@ -32,6 +32,55 @@ class CourseAttendanceModel extends CourseAttendance {
   }
 }
 
+/// JSON → [AttendanceOverview].
+class AttendanceOverviewModel extends AttendanceOverview {
+  const AttendanceOverviewModel({
+    required super.overall,
+    required super.courses,
+  });
+
+  factory AttendanceOverviewModel.fromJson(Map<String, dynamic> json) =>
+      AttendanceOverviewModel(
+        // `overall` puts its tallies at the top level, which
+        // [CourseAttendanceModel.fromJson] already accepts.
+        overall: CourseAttendanceModel.fromJson(_map(json['overall'])),
+        courses: ((json['courses'] as List?) ?? const [])
+            .whereType<Map<String, dynamic>>()
+            .map(CourseAttendanceSummaryModel.fromJson)
+            .toList(growable: false),
+      );
+}
+
+/// JSON → [CourseAttendanceSummary].
+class CourseAttendanceSummaryModel extends CourseAttendanceSummary {
+  const CourseAttendanceSummaryModel({
+    required super.courseId,
+    required super.courseName,
+    required super.courseCode,
+    required super.divisionId,
+    required super.totalSessions,
+    required super.percentage,
+    required super.counts,
+  });
+
+  factory CourseAttendanceSummaryModel.fromJson(Map<String, dynamic> json) =>
+      CourseAttendanceSummaryModel(
+        courseId: json['courseId'] as String? ?? '',
+        courseName: json['courseName'] as String? ?? '',
+        courseCode: json['courseCode'] as String? ?? '',
+        // Legitimately empty when no division is resolved for the semester.
+        divisionId: json['divisionId'] as String? ?? '',
+        totalSessions: _int(json['totalSessions']),
+        percentage: _int(json['percentage']),
+        counts: AttendanceCounts(
+          present: _int(json['present']),
+          absent: _int(json['absent']),
+          late: _int(json['late']),
+          leave: _int(json['leave']),
+        ),
+      );
+}
+
 /// JSON → [AttendanceSession].
 class AttendanceSessionModel extends AttendanceSession {
   const AttendanceSessionModel({

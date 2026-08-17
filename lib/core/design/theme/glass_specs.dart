@@ -261,24 +261,34 @@ abstract final class GlassMetrics {
   /// that away: at 60 a card, a book cover and an empty background all render
   /// identically underneath it.
   ///
-  /// 14 keeps shapes behind clearly recognisable — colour, position and outline all
-  /// survive — while detail and text go soft. Roughly a 28px CSS blur.
+  /// 22 keeps shapes behind clearly recognisable — colour, position and outline all
+  /// survive — while detail and text go soft. Roughly a 44px CSS blur.
+  ///
+  /// It sat at 14 while the tint carried the material at 38%. Now that the tint is
+  /// down to 25% the frost *is* the material, which is what the reference bar does:
+  /// the body of the surface comes from the blur, and the tint only has to give the
+  /// selection pill something to sit on. The ceiling is the app bar's resting 24 —
+  /// this capsule must stay the lighter of the two.
   ///
   /// Zeroed entirely under Reduce Transparency, like every other sigma.
-  static const navBarBlurSigma = 14.0;
-  static const navBarBlurSigmaScrolled = 20.0;
+  static const navBarBlurSigma = 22.0;
+  static const navBarBlurSigmaScrolled = 28.0;
 
   /// Saturation multiplier applied to the capsule's blurred backdrop.
   ///
   /// Blurring averages colour toward grey, so a faithful blur of a vivid card comes
   /// back washed out. iOS compensates: its materials saturate what they blur, which
-  /// is why colour bleeds *through* Apple's glass rather than fading under it. Kept
-  /// low — past ~1.3 the bleed stops reading as vibrancy and starts looking like a
-  /// colour cast.
+  /// is why colour bleeds *through* Apple's glass rather than fading under it.
+  ///
+  /// It rose from 1.18 with the sigma: 22 averages more colour to grey than 14 did,
+  /// and with only 25% of tint left the colour bleeding through *is* the tell that
+  /// this is glass. 1.3 remains the hard ceiling — past it the bleed stops reading
+  /// as vibrancy and starts looking like a colour cast — so this sits just short of
+  /// it. Retreat to 1.20 if a vivid card ever casts the capsule.
   ///
   /// Nav-capsule only. The app bar spans the full width, where the same boost would
   /// tint the whole header from whatever happened to scroll under its left edge.
-  static const navBarSaturation = 1.18;
+  static const navBarSaturation = 1.26;
 
   /// Edge refraction for chrome, in pixels of inward displacement at the rim.
   ///

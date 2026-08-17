@@ -19,6 +19,10 @@ class AttendanceRepositoryImpl
       guard(() => _service.getCourseAnalytics(courseId));
 
   @override
+  Future<Either<Failure, AttendanceOverview>> getOverallAnalytics() =>
+      guard(_service.getOverallAnalytics);
+
+  @override
   Future<Either<Failure, Paginated<AttendanceSession>>> listSessions({
     String? courseId,
     String? status,

@@ -15,6 +15,16 @@ import 'glass_curves.dart';
 /// Every interactive widget in the library routes its press through this, so
 /// timing, curve and haptic strength are consistent instead of being re-tuned
 /// per widget.
+///
+/// **[pressedOpacity] must be 1.0 for any surface that owns a backdrop filter.**
+/// [Opacity] composites its subtree into a layer of its own, and a backdrop
+/// filter inside one has no backdrop left to sample — the surface and everything
+/// on it render as nothing at all for as long as the press is held. This is not
+/// theoretical: it is what blanked the disabled Reset button in the filter sheet
+/// once buttons moved onto real glass. Scale and glow carry the press perfectly
+/// well without it, which is why [LiquidGlassButton] and [LiquidGlassFAB] both
+/// opt out. The default is left at 0.88 for the surfaces that have no filter and
+/// do read better with the dip.
 class GlassPressable extends StatefulWidget {
   const GlassPressable({
     super.key,

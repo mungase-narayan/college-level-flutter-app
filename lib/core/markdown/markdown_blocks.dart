@@ -514,73 +514,80 @@ class NoticeBlock extends StatelessWidget {
     final url = _str(data['url']);
 
     return _Block(
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-        decoration: BoxDecoration(
-          color: scheme.primary.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-          border: Border(left: BorderSide(color: scheme.primary, width: 4)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Wrap(
-              crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: 10,
-              runSpacing: 2,
-              children: [
-                Text(
-                  _str(data['title']) ?? '',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                if (_str(data['date']) case final date?)
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.event_outlined,
-                        size: 13,
-                        color: scheme.mutedForeground,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(date, style: theme.textTheme.labelSmall),
-                    ],
-                  ),
-              ],
+      // Clipped rather than `borderRadius` on the decoration itself: Flutter
+      // refuses to paint a non-uniform border under a radius, and the throw
+      // lands after the background fill, so the notice would render empty.
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        child: Container(
+          padding: const EdgeInsetsDirectional.fromSTEB(18, 12, 14, 12),
+          decoration: BoxDecoration(
+            color: scheme.primary.withValues(alpha: 0.08),
+            border: BorderDirectional(
+              start: BorderSide(color: scheme.primary, width: 4),
             ),
-            if (_str(data['body']) case final body?)
-              Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: Text(body, style: theme.textTheme.bodyMedium),
-              ),
-            if (url != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: InkWell(
-                  onTap: () => _open(context, url),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        _str(data['linkLabel']) ?? 'Read more',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: scheme.primary,
-                          fontWeight: FontWeight.w600,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 10,
+                runSpacing: 2,
+                children: [
+                  Text(
+                    _str(data['title']) ?? '',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  if (_str(data['date']) case final date?)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.event_outlined,
+                          size: 13,
+                          color: scheme.mutedForeground,
                         ),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.arrow_forward_rounded,
-                        size: 14,
-                        color: scheme.primary,
-                      ),
-                    ],
+                        const SizedBox(width: 4),
+                        Text(date, style: theme.textTheme.labelSmall),
+                      ],
+                    ),
+                ],
+              ),
+              if (_str(data['body']) case final body?)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(body, style: theme.textTheme.bodyMedium),
+                ),
+              if (url != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: InkWell(
+                    onTap: () => _open(context, url),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _str(data['linkLabel']) ?? 'Read more',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: scheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.arrow_forward_rounded,
+                          size: 14,
+                          color: scheme.primary,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
