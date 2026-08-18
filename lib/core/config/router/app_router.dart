@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../features/auth/domain/usecases/accept_invitation_usecase.dart';
+import '../../../features/auth/domain/usecases/password_reset_usecases.dart';
 import '../../../features/auth/presentation/bloc/auth/auth_bloc.dart';
 import '../../../features/auth/presentation/pages/login_page.dart';
 import '../../../features/auth/presentation/pages/role_placeholder_page.dart';
@@ -26,6 +27,8 @@ import '../../../features/announcements/presentation/pages/announcements_page.da
 import '../../../features/attendance/presentation/bloc/attendance_overview_cubit.dart';
 import '../../../features/attendance/presentation/bloc/attendance_sessions_cubit.dart';
 import '../../../features/attendance/presentation/pages/attendance_page.dart';
+import '../../../features/auth/presentation/pages/forgot_password_page.dart';
+import '../../../features/auth/presentation/pages/reset_password_page.dart';
 import '../../../features/auth/presentation/pages/set_password_page.dart';
 import '../../../features/courses/presentation/bloc/courses_cubit.dart';
 import '../../../features/courses/presentation/pages/course_detail_page.dart';
@@ -67,6 +70,13 @@ class Routes {
   static const splash = '/splash';
   static const login = '/auth/login';
   static const setPassword = '/invite/set-password';
+  static const forgotPassword = '/auth/forgot-password';
+  static const resetPassword = '/auth/reset-password';
+
+  /// The reset screen with the address already filled in, so the student does
+  /// not retype the email they just entered.
+  static String resetPasswordFor(String email) =>
+      '$resetPassword?email=${Uri.encodeQueryComponent(email)}';
 }
 
 /// Builds the app router.
@@ -89,6 +99,8 @@ GoRouter createRouter(AuthBloc authBloc) {
       final isSplash = location == Routes.splash;
       final isPublic = location == Routes.login ||
           location.startsWith(Routes.setPassword) ||
+          location.startsWith(Routes.forgotPassword) ||
+          location.startsWith(Routes.resetPassword) ||
           location.startsWith('/@');
 
       // Storage hasn't been read yet — hold everything on the splash screen.
@@ -121,6 +133,20 @@ GoRouter createRouter(AuthBloc authBloc) {
         builder: (context, state) => SetPasswordPage(
           acceptInvitation: sl<AcceptInvitationUseCase>(),
           token: state.uri.queryParameters['token'],
+        ),
+      ),
+      GoRoute(
+        path: Routes.forgotPassword,
+        builder: (_, _) => ForgotPasswordPage(
+          requestPasswordReset: sl<RequestPasswordResetUseCase>(),
+        ),
+      ),
+      GoRoute(
+        path: Routes.resetPassword,
+        builder: (context, state) => ResetPasswordPage(
+          resetPassword: sl<ResetPasswordUseCase>(),
+          requestPasswordReset: sl<RequestPasswordResetUseCase>(),
+          email: state.uri.queryParameters['email'],
         ),
       ),
 

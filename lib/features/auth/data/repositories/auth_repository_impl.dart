@@ -51,6 +51,26 @@ class AuthRepositoryImpl with RepositoryGuard implements AuthRepository {
       });
 
   @override
+  Future<Either<Failure, Unit>> requestPasswordReset({
+    required String email,
+  }) =>
+      guard(() async {
+        await _remote.requestPasswordReset(email: email);
+        return unit;
+      });
+
+  @override
+  Future<Either<Failure, Unit>> resetPassword({
+    required String email,
+    required String otp,
+    required String password,
+  }) =>
+      guard(() async {
+        await _remote.resetPassword(email: email, otp: otp, password: password);
+        return unit;
+      });
+
+  @override
   Future<Either<Failure, Unit>> logout() async {
     // The local wipe must happen regardless — a failed network call should
     // never leave the user stuck in a session they asked to end.

@@ -21,6 +21,20 @@ abstract class AuthRepository {
     required String password,
   });
 
+  /// `POST /users/forgot-password`. Emails a 6-digit code valid for 10 minutes,
+  /// invalidating any code issued earlier.
+  ///
+  /// Succeeds even when no such account exists — the server refuses to say.
+  Future<Either<Failure, Unit>> requestPasswordReset({required String email});
+
+  /// `POST /users/reset-password`. Sets the new password and clears any login
+  /// lockout, since a verified code proves the student can read the inbox.
+  Future<Either<Failure, Unit>> resetPassword({
+    required String email,
+    required String otp,
+    required String password,
+  });
+
   /// `POST /users/logout` plus a local wipe. The local wipe happens even if the
   /// network call fails, so the user is never stuck signed in.
   Future<Either<Failure, Unit>> logout();

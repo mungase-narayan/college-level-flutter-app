@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../config/theme/app_theme.dart';
 import '../animations/glass_curves.dart';
@@ -36,6 +37,7 @@ class LiquidGlassInput extends StatefulWidget {
     this.onSubmitted,
     this.validator,
     this.focusNode,
+    this.inputFormatters,
   });
 
   final TextEditingController? controller;
@@ -55,6 +57,7 @@ class LiquidGlassInput extends StatefulWidget {
   final ValueChanged<String>? onSubmitted;
   final FormFieldValidator<String>? validator;
   final FocusNode? focusNode;
+  final List<TextInputFormatter>? inputFormatters;
 
   @override
   State<LiquidGlassInput> createState() => _LiquidGlassInputState();
@@ -182,6 +185,7 @@ class _LiquidGlassInputState extends State<LiquidGlassInput> {
                       onChanged: widget.onChanged,
                       onFieldSubmitted: widget.onSubmitted,
                       validator: widget.validator,
+                      inputFormatters: widget.inputFormatters,
                       style: theme.textTheme.bodyMedium,
                       cursorColor: scheme.primary,
                       cursorRadius: const Radius.circular(2),

@@ -237,7 +237,12 @@ void main() {
             glass: glass,
           ),
         );
-        await tester.pumpAndSettle();
+        // Not `pumpAndSettle`: this fixture sits at midday, so whenever the
+        // suite runs inside that window the session is live and its pulsing dot
+        // animates forever — settling would wait for an animation that never
+        // ends.
+        await tester.pump();
+        await tester.pump();
 
         expect(find.text("Today's sessions"), findsOneWidget);
         expect(find.text(DateFormat('EEEE, d MMM').format(today)),
