@@ -43,6 +43,38 @@ class AuthService {
     );
   }
 
+  /// `POST /users/forgot-password` — public. Emails a 6-digit code.
+  ///
+  /// Always succeeds, even for an address with no account: the endpoint answers
+  /// identically either way so it cannot be used to discover which emails are
+  /// registered. It stays silent for inactive and email-unverified accounts too,
+  /// and swallows mail-send failures for the same reason — so a 200 here is not
+  /// proof that anything was delivered.
+  Future<void> requestPasswordReset({required String email}) async {
+    await _client.post(
+      ApiUrls.forgotPassword,
+      body: {'email': email},
+      parse: (_) => null,
+    );
+  }
+
+  /// `POST /users/reset-password` — public. The password must be 8–128 chars.
+  ///
+  /// Every failure — unknown account, no live code, too many wrong guesses, a
+  /// mismatch — comes back as one 400 carrying the same sentence, so there is
+  /// nothing to branch on: show what the server said.
+  Future<void> resetPassword({
+    required String email,
+    required String otp,
+    required String password,
+  }) async {
+    await _client.post(
+      ApiUrls.resetPassword,
+      body: {'email': email, 'otp': otp, 'password': password},
+      parse: (_) => null,
+    );
+  }
+
   /// `POST /users/logout`. Only clears the server-set cookies — the bearer
   /// token stays valid until it expires, so the local wipe is what matters.
   Future<void> logout() async {

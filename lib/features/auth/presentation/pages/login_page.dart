@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/common/widgets/widgets.dart';
+import '../../../../core/config/router/app_router.dart';
 import '../../../../core/config/theme/app_theme.dart';
 import '../../../../core/design/extensions/glass_context.dart';
 import '../../../../core/design/theme/glass_specs.dart';
@@ -136,6 +138,29 @@ class _LoginPageState extends State<LoginPage> {
                                         (value == null || value.isEmpty)
                                             ? 'Password is required'
                                             : null,
+                                  ),
+                                  // Under the field rather than beside its
+                                  // label: AppPasswordInput owns its own label
+                                  // on both the material and the glass branch,
+                                  // so a trailing label action would mean
+                                  // reworking a shared widget for no gain.
+                                  Align(
+                                    alignment: Alignment.centerRight,
+                                    child: TextButton(
+                                      onPressed: state.isSubmitting
+                                          ? null
+                                          : () => context
+                                              .push(Routes.forgotPassword),
+                                      style: TextButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                        ),
+                                        minimumSize: const Size(0, 36),
+                                        tapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                      ),
+                                      child: const Text('Forgot password?'),
+                                    ),
                                   ),
                                   if (state.failure != null) ...[
                                     const SizedBox(height: 14),

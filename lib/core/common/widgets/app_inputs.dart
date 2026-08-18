@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../config/theme/app_theme.dart';
 import '../../design/extensions/glass_context.dart';
@@ -31,6 +32,7 @@ class AppInput extends StatelessWidget {
     this.onSubmitted,
     this.validator,
     this.focusNode,
+    this.inputFormatters,
   });
 
   final TextEditingController? controller;
@@ -50,6 +52,10 @@ class AppInput extends StatelessWidget {
   final ValueChanged<String>? onSubmitted;
   final FormFieldValidator<String>? validator;
   final FocusNode? focusNode;
+
+  /// Applied on both branches — a formatter that only worked on Android would
+  /// be worse than none at all.
+  final List<TextInputFormatter>? inputFormatters;
 
   @override
   Widget build(BuildContext context) {
@@ -72,6 +78,7 @@ class AppInput extends StatelessWidget {
         onSubmitted: onSubmitted,
         validator: validator,
         focusNode: focusNode,
+        inputFormatters: inputFormatters,
       );
     }
 
@@ -97,6 +104,7 @@ class AppInput extends StatelessWidget {
           onChanged: onChanged,
           onFieldSubmitted: onSubmitted,
           validator: validator,
+          inputFormatters: inputFormatters,
           style: theme.textTheme.bodyMedium,
           decoration: InputDecoration(
             hintText: hint,

@@ -35,6 +35,9 @@ import 'package:college_level/features/courses/domain/entities/course.dart';
 import 'package:college_level/features/courses/domain/usecases/course_usecases.dart';
 import 'package:college_level/features/courses/presentation/bloc/courses_cubit.dart';
 import 'package:college_level/features/courses/presentation/pages/courses_page.dart';
+import 'package:college_level/features/auth/domain/usecases/password_reset_usecases.dart';
+import 'package:college_level/features/auth/presentation/pages/forgot_password_page.dart';
+import 'package:college_level/features/auth/presentation/pages/reset_password_page.dart';
 import 'package:college_level/features/notes/domain/entities/note.dart';
 import 'package:college_level/features/notes/domain/usecases/notes_usecases.dart';
 import 'package:college_level/features/notes/presentation/bloc/my_notes_stats_cubit.dart';
@@ -83,6 +86,11 @@ class _MockToggleNoteLike extends Mock implements ToggleNoteLikeUseCase {}
 
 class _MockGetNotesStats extends Mock implements GetMyNotesStatsUseCase {}
 
+class _MockRequestPasswordReset extends Mock
+    implements RequestPasswordResetUseCase {}
+
+class _MockResetPassword extends Mock implements ResetPasswordUseCase {}
+
 /// Every sidebar destination that owns a real screen, pumped down both the
 /// Material and the Liquid Glass branch.
 ///
@@ -104,6 +112,10 @@ void main() {
       const CreateNoteInput(title: 't', content: 'c', link: NoteLinkContext()),
     );
     registerFallbackValue(const UpdateNoteInput(id: 'n1'));
+    registerFallbackValue(const RequestPasswordResetParams(email: 'a@b.co'));
+    registerFallbackValue(
+      const ResetPasswordParams(email: 'a@b.co', otp: '123456', password: 'p'),
+    );
   });
 
   setUp(() {
@@ -1294,6 +1306,94 @@ void main() {
         find.widgetWithText(TextField, 'How TCP handshake works'),
         findsOneWidget,
       );
+    });
+  });
+
+  /// Password recovery has no web counterpart to mirror — the React login
+  /// screen's "Forgot password?" is a button with no handler — so these lock in
+  /// the copy the two clients will have to agree on later.
+  group('Password reset', () {
+    late _MockRequestPasswordReset requestReset;
+    late _MockResetPassword resetPassword;
+
+    setUp(() {
+      requestReset = _MockRequestPasswordReset();
+      resetPassword = _MockResetPassword();
+
+      when(() => requestReset(any()))
+          .thenAnswer((_) async => const Right<Failure, Unit>(unit));
+      when(() => resetPassword(any()))
+          .thenAnswer((_) async => const Right<Failure, Unit>(unit));
+    });
+
+    Widget forgotPage() =>
+        ForgotPasswordPage(requestPasswordReset: requestReset);
+
+    Widget resetPage({String? email = 'ada@school.edu'}) => ResetPasswordPage(
+          resetPassword: resetPassword,
+          requestPasswordReset: requestReset,
+          email: email,
+        );
+
+    bothPlatforms('the forgot screen asks for an email and nothing else',
+        (tester, host) async {
+      await tester.pumpWidget(host(forgotPage()));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Forgot password'), findsOneWidget);
+      expect(
+        find.textContaining("we'll send you a 6-digit code"),
+        findsOneWidget,
+      );
+      expect(find.text('Send code'), findsOneWidget);
+      expect(find.text('Back to sign in'), findsOneWidget);
+      // One field: the code is asked for on the next screen.
+      expect(find.byType(AppPasswordInput), findsNothing);
+    });
+
+    bothPlatforms('the reset screen carries the code, both passwords and resend',
+        (tester, host) async {
+      await tester.pumpWidget(host(resetPage()));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Verification code'), findsOneWidget);
+      expect(find.text('New password'), findsOneWidget);
+      expect(find.text('Confirm password'), findsOneWidget);
+      expect(find.text("Didn't get a code?"), findsOneWidget);
+      expect(find.byType(AppPasswordInput), findsNWidgets(2));
+    });
+
+    /// The server answers the same way for an address it has never seen, and
+    /// stays silent for inactive and unverified accounts, so neither screen may
+    /// state that an email was actually delivered.
+    bothPlatforms('the sent-to notice is hedged, not a promise',
+        (tester, host) async {
+      await tester.pumpWidget(host(resetPage()));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('If an account exists for'), findsOneWidget);
+      expect(find.textContaining('ada@school.edu'), findsOneWidget);
+      expect(find.textContaining('expires in 10 minutes'), findsOneWidget);
+    });
+
+    bothPlatforms('resend is held shut while a fresh code is in flight',
+        (tester, host) async {
+      await tester.pumpWidget(host(resetPage()));
+      await tester.pump();
+
+      expect(find.text('Resend in 60s'), findsOneWidget);
+      expect(find.text('Resend code'), findsNothing);
+    });
+
+    /// Landing cold — a restart, or a link — leaves no address to resend to.
+    bothPlatforms('a missing email becomes a field, not a caption',
+        (tester, host) async {
+      await tester.pumpWidget(host(resetPage(email: null)));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Email'), findsOneWidget);
+      expect(find.textContaining('If an account exists for'), findsNothing);
+      expect(find.text('Resend code'), findsOneWidget);
     });
   });
 }

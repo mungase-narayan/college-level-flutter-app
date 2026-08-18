@@ -6,6 +6,7 @@ import '../../../features/auth/data/datasources/auth_service.dart';
 import '../../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../../features/auth/domain/repositories/auth_repository.dart';
 import '../../../features/auth/domain/usecases/accept_invitation_usecase.dart';
+import '../../../features/auth/domain/usecases/password_reset_usecases.dart';
 import '../../../features/auth/domain/usecases/auth_usecases.dart';
 import '../../../features/auth/domain/usecases/login_usecase.dart';
 import '../../../features/auth/presentation/bloc/auth/auth_bloc.dart';
@@ -270,6 +271,8 @@ void _initAuth() {
     ..registerLazySingleton(() => UpdateMyAccountUseCase(sl()))
     ..registerLazySingleton(() => UploadAvatarUseCase(sl()))
     ..registerLazySingleton(() => AcceptInvitationUseCase(sl()))
+    ..registerLazySingleton(() => RequestPasswordResetUseCase(sl()))
+    ..registerLazySingleton(() => ResetPasswordUseCase(sl()))
     // One AuthBloc for the whole app — the router depends on it.
     ..registerLazySingleton<AuthBloc>(
       () => AuthBloc(

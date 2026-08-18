@@ -26,6 +26,8 @@ class ApiUrls {
   // ── Auth / account ────────────────────────────────────────────────────────
   static const login = '/users/login';
   static const acceptInvitation = '/users/accept-invitation';
+  static const forgotPassword = '/users/forgot-password';
+  static const resetPassword = '/users/reset-password';
   static const logout = '/users/logout';
   static const updateMyAccount = '/users/me';
 
