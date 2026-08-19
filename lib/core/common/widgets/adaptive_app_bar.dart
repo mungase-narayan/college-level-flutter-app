@@ -22,6 +22,7 @@ class AdaptiveAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.actions = const [],
     this.bottom,
     this.automaticallyImplyLeading = true,
+    this.leading,
   });
 
   final String title;
@@ -32,6 +33,11 @@ class AdaptiveAppBar extends StatelessWidget implements PreferredSizeWidget {
   final PreferredSizeWidget? bottom;
 
   final bool automaticallyImplyLeading;
+
+  /// Replaces the automatic back affordance. Needed by screens that can be
+  /// reached without a back stack — a deep link has nothing to pop, so those
+  /// supply their own control rather than stranding the reader.
+  final Widget? leading;
 
   /// Reads [AppPlatform.useGlass] directly rather than through `context`:
   /// [Scaffold] queries [preferredSize] before this widget builds, so no
@@ -53,10 +59,12 @@ class AdaptiveAppBar extends StatelessWidget implements PreferredSizeWidget {
         title: title,
         actions: actions,
         bottom: bottom,
+        leading: leading,
         // Drill-downs are pushed, so they always need a way back — and iOS wants
         // a chevron rather than Material's arrow.
-        showBackButton:
-            automaticallyImplyLeading && Navigator.of(context).canPop(),
+        showBackButton: leading == null &&
+            automaticallyImplyLeading &&
+            Navigator.of(context).canPop(),
       );
     }
 
@@ -64,6 +72,7 @@ class AdaptiveAppBar extends StatelessWidget implements PreferredSizeWidget {
       title: Text(title),
       actions: actions,
       bottom: bottom,
+      leading: leading,
       automaticallyImplyLeading: automaticallyImplyLeading,
     );
   }

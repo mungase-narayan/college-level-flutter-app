@@ -133,9 +133,8 @@ void main() {
   });
 
   group('FeaturePendingPage', () {
-    // Eleven sidebar destinations render this one page — Analytics, Weekly
-    // Report, Notes, Contests, Rating, Leaderboard, Badges, Wallet,
-    // Announcements, Attendance and Academic Calendar.
+    // Four sidebar destinations render this one page — Analytics, Weekly
+    // Report, Contests and Rating.
     bothPlatforms('renders its title and description', (tester, host) async {
       await tester.pumpWidget(
         host(

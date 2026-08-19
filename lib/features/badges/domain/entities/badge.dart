@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../core/config/theme/app_colors.dart';
+
 /// `GET /student/practice/badges` → `{ earned, catalog }`.
 ///
 /// Badge *definitions* live in backend code, not the database — only earned
@@ -121,6 +123,23 @@ class BadgeDefinition extends Equatable {
     this.threshold = 0,
   });
 
+  /// One completed daily-challenge month, promoted to its own catalog entry.
+  ///
+  /// The catalog ships a single locked template for `daily_perfect_month`, but
+  /// the badge recurs — a student earns July *and* June — so each earned month
+  /// is synthesised into a definition of its own. The key is suffixed with the
+  /// period to keep those cards distinct, and the name is derived from the
+  /// period rather than copied, because older rows were stored under a generic
+  /// name.
+  factory BadgeDefinition.fromDailyEarned(EarnedBadge badge) => BadgeDefinition(
+        key: '${badge.badgeKey}:${badge.period ?? ''}',
+        name: badge.dailyChallengeName,
+        description: 'Completed every daily challenge this month',
+        category: BadgeCategory.dailyChallenge,
+        tier: badge.tier.isEmpty ? 'gold' : badge.tier,
+        threshold: 1,
+      );
+
   final String key;
   final String name;
   final String description;
@@ -174,5 +193,22 @@ class BadgeTier {
         'platinum' => const [Color(0xFFA5F3FC), Color(0xFF0EA5E9)],
         'diamond' => const [Color(0xFF8B5CF6), Color(0xFFD961D2)],
         _ => const [Color(0xFF94A3B8), Color(0xFF64748B)],
+      };
+
+  /// The earned card's surface and chip tint, from `TIER_ACCENT`.
+  ///
+  /// A [TwShade] rather than raw colours, so `context.tokens.tone(...)` renders
+  /// the web's `bg-<c>-500/15 text-<c>-700 dark:text-<c>-300` pair and picks up
+  /// dark mode for free.
+  static TwShade accent(String tier) => switch (tier) {
+        'bronze' => TwColors.orange,
+        'silver' => TwColors.slate,
+        'gold' => TwColors.amber,
+        // The web tints these `sky` and `chart-4`. `TwColors` has no sky, and
+        // cyan is the nearest hue to it; fuchsia was added to the palette as
+        // the stand-in for chart-4 (see `app_colors.dart`).
+        'platinum' => TwColors.cyan,
+        'diamond' => TwColors.fuchsia,
+        _ => TwColors.slate,
       };
 }

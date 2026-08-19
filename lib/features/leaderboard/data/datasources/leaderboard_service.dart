@@ -16,7 +16,7 @@ class LeaderboardService {
   ///
   /// `scope` ∈ school|batch|department (the API also allows `semester`);
   /// `period` ∈ today|weekly|monthly|yearly|all_time.
-  Future<LeaderboardPageModel> getLeaderboard({
+  Future<LeaderboardStandingsModel> getLeaderboard({
     String scope = 'school',
     String period = 'all_time',
     int page = 1,
@@ -26,7 +26,7 @@ class LeaderboardService {
       ApiUrls.practiceLeaderboard,
       query: {'scope': scope, 'period': period, 'page': page, 'limit': limit},
       parse: (data) =>
-          LeaderboardPageModel.fromJson((data as Map<String, dynamic>?) ?? const {}),
+          LeaderboardStandingsModel.fromJson((data as Map<String, dynamic>?) ?? const {}),
     );
     return response.data;
   }

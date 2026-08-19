@@ -86,6 +86,20 @@ flutter:
     - assets/images/app_logo.png
     - assets/images/app_logo_ios.png
 
+  fonts:
+    # Font Awesome Free Solid, shipped for its stacked-coins glyph: Material
+    # Icons has no coin that isn't stamped with a currency symbol, and the
+    # rewards wallet spends points, not money.
+    #
+    # The font is vendored rather than pulled in via `font_awesome_flutter`,
+    # which does not build on this Flutter version — it subclasses `IconData`,
+    # now a `final class`. Constructing `IconData` is still allowed, so
+    # `AppIcons.coins` names the glyph directly.
+    - family: FontAwesomeSolid
+      fonts:
+        - asset: assets/fonts/FontAwesomeSolid.otf
+          weight: 900
+
   # Compiled by impellerc at build time and loaded through
   # `FragmentProgram.fromAsset`. Not a dependency — a first-party asset.
   shaders:

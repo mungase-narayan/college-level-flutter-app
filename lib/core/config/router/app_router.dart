@@ -28,6 +28,19 @@ import '../../../features/attendance/presentation/bloc/attendance_overview_cubit
 import '../../../features/attendance/presentation/bloc/attendance_sessions_cubit.dart';
 import '../../../features/attendance/presentation/pages/attendance_page.dart';
 import '../../../features/auth/presentation/pages/forgot_password_page.dart';
+import '../../../features/badges/presentation/bloc/badges_cubit.dart';
+import '../../../features/badges/presentation/pages/badges_page.dart';
+import '../../../features/leaderboard/presentation/bloc/leaderboard_cubit.dart';
+import '../../../features/leaderboard/presentation/pages/leaderboard_page.dart';
+import '../../../features/public_profile/presentation/bloc/public_profile_cubit.dart';
+import '../../../features/rating/presentation/bloc/rating_cubit.dart';
+import '../../../features/rating/presentation/bloc/rating_leaderboard_cubit.dart';
+import '../../../features/rating/presentation/pages/rating_page.dart';
+import '../../../features/public_profile/presentation/pages/public_profile_page.dart';
+import '../../../features/rewards/presentation/bloc/order_chat_cubit.dart';
+import '../../../features/rewards/presentation/bloc/store_cubit.dart';
+import '../../../features/rewards/presentation/bloc/wallet_cubit.dart';
+import '../../../features/rewards/presentation/pages/wallet_page.dart';
 import '../../../features/auth/presentation/pages/reset_password_page.dart';
 import '../../../features/auth/presentation/pages/set_password_page.dart';
 import '../../../features/courses/presentation/bloc/courses_cubit.dart';
@@ -128,6 +141,22 @@ GoRouter createRouter(AuthBloc authBloc) {
     routes: [
       GoRoute(path: Routes.splash, builder: (_, _) => const SplashPage()),
       GoRoute(path: Routes.login, builder: (_, _) => const LoginPage()),
+      // Mirrors the web's `/@username` showcase. Sits on the root navigator so
+      // it covers the shell with its own back button, and stays outside the
+      // auth guard — `redirect` already treats `/@…` as public.
+      GoRoute(
+        path: '/@:username',
+        builder: (context, state) {
+          final username = state.pathParameters['username'] ?? '';
+          return BlocProvider(
+            create: (_) => PublicProfileCubit(
+              getPublicProfile: sl(),
+              username: username,
+            ),
+            child: const PublicProfilePage(),
+          );
+        },
+      ),
       GoRoute(
         path: Routes.setPassword,
         builder: (context, state) => SetPasswordPage(
@@ -267,17 +296,65 @@ GoRouter createRouter(AuthBloc authBloc) {
 
           // ── Compete ───────────────────────────────────────────────────────
           _pending(StudentRoutes.contests, 'Contests', Icons.emoji_events_rounded),
-          _pending(StudentRoutes.rating, 'Rating', Icons.trending_up_rounded),
-          _pending(
-            StudentRoutes.leaderboard,
-            'Leaderboard',
-            Icons.leaderboard_rounded,
+          GoRoute(
+            path: StudentRoutes.rating,
+            builder: (_, _) => MultiBlocProvider(
+              providers: [
+                BlocProvider(
+                  create: (_) => RatingCubit(getMyRating: sl()),
+                ),
+                BlocProvider(
+                  create: (_) =>
+                      RatingLeaderboardCubit(getRatingLeaderboard: sl()),
+                ),
+              ],
+              child: const RatingPage(),
+            ),
           ),
-          _pending(StudentRoutes.badges, 'Badges', Icons.military_tech_rounded),
-          _pending(
-            StudentRoutes.wallet,
-            'Wallet',
-            Icons.account_balance_wallet_rounded,
+          GoRoute(
+            path: StudentRoutes.leaderboard,
+            builder: (_, _) => BlocProvider(
+              create: (_) => LeaderboardCubit(getLeaderboard: sl()),
+              child: const LeaderboardPage(),
+            ),
+          ),
+          GoRoute(
+            path: StudentRoutes.badges,
+            builder: (_, _) => BlocProvider(
+              create: (_) => BadgesCubit(getBadges: sl()),
+              child: const BadgesPage(),
+            ),
+          ),
+          GoRoute(
+            path: StudentRoutes.wallet,
+            builder: (_, state) => MultiBlocProvider(
+              providers: [
+                // Four endpoints, four cubits: the hero must survive a failure
+                // in any panel, and each tab loads only once opened.
+                BlocProvider(create: (_) => WalletCubit(getWallet: sl())),
+                BlocProvider(
+                  create: (_) =>
+                      WalletTransactionsCubit(listTransactions: sl()),
+                ),
+                BlocProvider(
+                  create: (_) =>
+                      StoreCubit(getStore: sl(), purchaseProduct: sl()),
+                ),
+                BlocProvider(create: (_) => OrdersCubit(listOrders: sl())),
+              ],
+              child: WalletPage(
+                // `?tab=` is how the points-earned and reward-purchased
+                // notifications deep-link into a specific panel.
+                initialTab: WalletTab.fromQuery(
+                  state.uri.queryParameters['tab'],
+                ),
+                createChatCubit: (orderId) => OrderChatCubit(
+                  orderId: orderId,
+                  listMessages: sl(),
+                  sendMessage: sl(),
+                ),
+              ),
+            ),
           ),
 
           // ── Campus ────────────────────────────────────────────────────────

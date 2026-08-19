@@ -7,13 +7,13 @@ import '../../../badges/domain/entities/badge.dart';
 import '../entities/leaderboard.dart';
 import '../repositories/leaderboard_repository.dart';
 
-class GetLeaderboardUseCase implements UseCase<LeaderboardPage, LeaderboardParams> {
+class GetLeaderboardUseCase implements UseCase<LeaderboardStandings, LeaderboardParams> {
   const GetLeaderboardUseCase(this._repository);
 
   final LeaderboardRepository _repository;
 
   @override
-  Future<Either<Failure, LeaderboardPage>> call(LeaderboardParams params) =>
+  Future<Either<Failure, LeaderboardStandings>> call(LeaderboardParams params) =>
       _repository.getLeaderboard(
         scope: params.scope,
         period: params.period,

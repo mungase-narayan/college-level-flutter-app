@@ -15,7 +15,7 @@ class LeaderboardRepositoryImpl
   final LeaderboardService _service;
 
   @override
-  Future<Either<Failure, LeaderboardPage>> getLeaderboard({
+  Future<Either<Failure, LeaderboardStandings>> getLeaderboard({
     String scope = LeaderboardScope.school,
     String period = LeaderboardPeriod.defaultPeriod,
     int page = 1,

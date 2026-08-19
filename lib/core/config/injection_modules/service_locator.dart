@@ -56,6 +56,10 @@ import '../../../features/analytics/data/repositories/analytics_repository_impl.
 import '../../../features/analytics/domain/repositories/analytics_repository.dart';
 import '../../../features/analytics/domain/usecases/analytics_usecases.dart';
 import '../../../features/leaderboard/data/datasources/leaderboard_service.dart';
+import '../../../features/public_profile/data/datasources/public_profile_service.dart';
+import '../../../features/public_profile/data/repositories/public_profile_repository_impl.dart';
+import '../../../features/public_profile/domain/repositories/public_profile_repository.dart';
+import '../../../features/public_profile/domain/usecases/get_public_profile_usecase.dart';
 import '../../../features/leaderboard/data/repositories/leaderboard_repository_impl.dart';
 import '../../../features/leaderboard/domain/repositories/leaderboard_repository.dart';
 import '../../../features/leaderboard/domain/usecases/leaderboard_usecases.dart';
@@ -67,7 +71,7 @@ import '../../../features/rating/domain/usecases/get_my_rating_usecase.dart';
 import '../../../features/rewards/data/datasources/rewards_service.dart';
 import '../../../features/rewards/data/repositories/rewards_repository_impl.dart';
 import '../../../features/rewards/domain/repositories/rewards_repository.dart';
-import '../../../features/rewards/domain/usecases/record_daily_visit_usecase.dart';
+import '../../../features/rewards/domain/usecases/rewards_usecases.dart';
 import '../../network/dio_client.dart';
 import '../../network/session_manager.dart';
 import '../theme/reduce_transparency_cubit.dart';
@@ -88,6 +92,7 @@ Future<void> initServiceLocator() async {
   _initAnalytics();
   _initRating();
   _initLeaderboard();
+  _initPublicProfile();
   _initAssessments();
   _initAttendance();
   _initAnnouncements();
@@ -218,11 +223,25 @@ void _initRating() {
   sl
     ..registerLazySingleton<RatingService>(() => RatingService(sl()))
     ..registerLazySingleton<RatingRepository>(() => RatingRepositoryImpl(sl()))
-    ..registerLazySingleton(() => GetMyRatingUseCase(sl()));
+    ..registerLazySingleton(() => GetMyRatingUseCase(sl()))
+    ..registerLazySingleton(() => GetRatingLeaderboardUseCase(sl()));
 }
 
 /// The leaderboard slice also owns the badges endpoint — both live under
 /// `/student/practice` and are read together by the dashboard highlights.
+/// The public student showcase reached by tapping a name on the leaderboard.
+/// Its endpoint needs no auth, but it rides the same configured client.
+void _initPublicProfile() {
+  sl
+    ..registerLazySingleton<PublicProfileService>(
+      () => PublicProfileService(sl()),
+    )
+    ..registerLazySingleton<PublicProfileRepository>(
+      () => PublicProfileRepositoryImpl(sl()),
+    )
+    ..registerLazySingleton(() => GetPublicProfileUseCase(sl()));
+}
+
 void _initLeaderboard() {
   sl
     ..registerLazySingleton<LeaderboardService>(() => LeaderboardService(sl()))
@@ -238,7 +257,14 @@ void _initRewards() {
     ..registerLazySingleton<RewardsService>(() => RewardsService(sl()))
     ..registerLazySingleton<RewardsRepository>(() => RewardsRepositoryImpl(sl()))
     ..registerLazySingleton(() => RecordDailyVisitUseCase(sl()))
-    ..registerLazySingleton(() => UseTimeTravelTicketUseCase(sl()));
+    ..registerLazySingleton(() => UseTimeTravelTicketUseCase(sl()))
+    ..registerLazySingleton(() => GetWalletUseCase(sl()))
+    ..registerLazySingleton(() => ListTransactionsUseCase(sl()))
+    ..registerLazySingleton(() => GetStoreUseCase(sl()))
+    ..registerLazySingleton(() => PurchaseProductUseCase(sl()))
+    ..registerLazySingleton(() => ListOrdersUseCase(sl()))
+    ..registerLazySingleton(() => ListOrderMessagesUseCase(sl()))
+    ..registerLazySingleton(() => SendOrderMessageUseCase(sl()));
 }
 
 Future<void> _initCore() async {

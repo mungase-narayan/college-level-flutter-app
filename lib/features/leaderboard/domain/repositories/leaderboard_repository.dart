@@ -5,7 +5,7 @@ import '../../../badges/domain/entities/badge.dart';
 import '../entities/leaderboard.dart';
 
 abstract class LeaderboardRepository {
-  Future<Either<Failure, LeaderboardPage>> getLeaderboard({
+  Future<Either<Failure, LeaderboardStandings>> getLeaderboard({
     String scope,
     String period,
     int page,
