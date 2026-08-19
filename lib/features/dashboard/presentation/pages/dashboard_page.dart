@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/common/widgets/widgets.dart';
 import '../../../../core/config/theme/app_colors.dart';
 import '../../../../core/config/theme/app_theme.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../analytics/domain/entities/student_analytics.dart';
 import '../../../auth/presentation/bloc/auth/auth_bloc.dart';
@@ -97,9 +98,9 @@ class _DashboardPageState extends State<DashboardPage> {
                       AppStatTile(
                         label: 'Coins',
                         value: Fmt.number(data.summary.totalPoints),
-                        icon: Icons.monetization_on_outlined,
+                        icon: AppIcons.coins,
                         shade: TwColors.amber,
-                        onTap: () => context.push('/student/wallet'),
+                        onTap: () => context.push(StudentRoutes.wallet),
                       ),
                       AppStatTile(
                         label: 'Current streak',

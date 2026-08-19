@@ -1,9 +1,11 @@
 import '../../domain/entities/badge.dart';
 
 int _int(Object? value, [int fallback = 0]) => (value as num?)?.toInt() ?? fallback;
-List<Map<String, dynamic>> _maps(Object? value) =>
-    (value as List?)?.whereType<Map<String, dynamic>>().toList(growable: false) ??
-    const [];
+// `is List` rather than `as List?`: a wrong-typed key must default like a
+// missing one, not throw out of the parse.
+List<Map<String, dynamic>> _maps(Object? value) => value is List
+    ? value.whereType<Map<String, dynamic>>().toList(growable: false)
+    : const [];
 
 /// JSON → [BadgeCollection].
 class BadgeCollectionModel extends BadgeCollection {

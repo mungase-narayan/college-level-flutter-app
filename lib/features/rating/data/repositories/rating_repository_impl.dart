@@ -14,4 +14,11 @@ class RatingRepositoryImpl with RepositoryGuard implements RatingRepository {
   @override
   Future<Either<Failure, ContestRating>> getMyRating() =>
       guard(() => _service.getMyRating());
+
+  @override
+  Future<Either<Failure, RatingLeaderboard>> getRatingLeaderboard({
+    int page = 1,
+    int limit = 20,
+  }) =>
+      guard(() => _service.getRatingLeaderboard(page: page, limit: limit));
 }

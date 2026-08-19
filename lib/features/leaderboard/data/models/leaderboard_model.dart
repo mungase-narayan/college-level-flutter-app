@@ -4,9 +4,9 @@ import '../../domain/entities/leaderboard.dart';
 int _int(Object? value, [int fallback = 0]) => (value as num?)?.toInt() ?? fallback;
 int? _intOrNull(Object? value) => (value as num?)?.toInt();
 
-/// JSON → [LeaderboardPage].
-class LeaderboardPageModel extends LeaderboardPage {
-  const LeaderboardPageModel({
+/// JSON → [LeaderboardStandings].
+class LeaderboardStandingsModel extends LeaderboardStandings {
+  const LeaderboardStandingsModel({
     required super.rows,
     required super.pagination,
     required super.scope,
@@ -14,8 +14,8 @@ class LeaderboardPageModel extends LeaderboardPage {
     super.me,
   });
 
-  factory LeaderboardPageModel.fromJson(Map<String, dynamic> json) =>
-      LeaderboardPageModel(
+  factory LeaderboardStandingsModel.fromJson(Map<String, dynamic> json) =>
+      LeaderboardStandingsModel(
         rows: ((json['data'] as List?) ?? const [])
             .whereType<Map<String, dynamic>>()
             .map(LeaderboardRowModel.fromJson)
@@ -65,6 +65,10 @@ class LeaderboardRowModel extends LeaderboardRow {
         rollNumber: json['rollNumber'] as String?,
         accuracy: _intOrNull(json['accuracy']),
         badgeCount: _int(json['badgeCount']),
-        isMe: json['isMe'] as bool? ?? false,
+        // The server calls this `isCurrentUser`; the entity calls it `isMe`
+        // because that reads better at the call site. Do not "correct" the key
+        // to match the field — reading `isMe` here silently disables the
+        // current-user row highlight, which is how it was broken before.
+        isMe: json['isCurrentUser'] as bool? ?? false,
       );
 }

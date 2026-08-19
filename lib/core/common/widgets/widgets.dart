@@ -18,6 +18,7 @@ export 'app_states.dart';
 export 'app_toast.dart';
 export 'heatmap_grid.dart';
 export 'remote_view.dart';
+export 'staggered_entrance.dart';
 export 'video_preview.dart';
 export 'video_source.dart';
 export 'youtube_video_player.dart';

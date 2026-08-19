@@ -18,4 +18,19 @@ class RatingService {
     );
     return response.data;
   }
+
+  /// `GET /student/contest-ratings/leaderboard` — the school's rated students.
+  Future<RatingLeaderboardModel> getRatingLeaderboard({
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final response = await _client.get(
+      ApiUrls.contestRatingLeaderboard,
+      query: {'page': page, 'limit': limit},
+      parse: (data) => RatingLeaderboardModel.fromJson(
+        (data as Map<String, dynamic>?) ?? const {},
+      ),
+    );
+    return response.data;
+  }
 }

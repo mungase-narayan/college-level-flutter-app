@@ -6,7 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/common/bloc/remote_cubit.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/usecases/usecase.dart';
-import '../../../rewards/domain/usecases/record_daily_visit_usecase.dart';
+import '../../../rewards/domain/usecases/rewards_usecases.dart';
 import '../../domain/entities/daily_challenge.dart';
 import '../../domain/entities/practice_attempt.dart';
 import '../../domain/entities/practice_question.dart';

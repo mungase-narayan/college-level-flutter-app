@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/painting.dart';
 
+import '../../../../core/network/api_response.dart';
+
 /// `GET /student/contest-ratings/me`.
 class ContestRating extends Equatable {
   const ContestRating({
@@ -85,6 +87,63 @@ class RatingHistoryEntry extends Equatable {
 
 /// The rating ladder, identical in the backend's `contest.constants.ts` and the
 /// web's `admin/contests/constants.ts`. `from` is inclusive; highest first.
+/// `GET /student/contest-ratings/leaderboard` — the school's rated students.
+class RatingLeaderboard extends Equatable {
+  const RatingLeaderboard({
+    required this.entries,
+    required this.pagination,
+    this.myRank,
+  });
+
+  final List<RatingLeaderboardEntry> entries;
+  final Pagination pagination;
+
+  /// The caller's own position, computed across the whole school rather than
+  /// the visible page — so it stays right even when they are not on it.
+  ///
+  /// Null until they have been in a rated contest. Not zero: `#0` is not a rank.
+  final int? myRank;
+
+  @override
+  List<Object?> get props => [entries, pagination, myRank];
+}
+
+class RatingLeaderboardEntry extends Equatable {
+  const RatingLeaderboardEntry({
+    required this.studentId,
+    required this.rank,
+    required this.rating,
+    required this.peakRating,
+    required this.contestsPlayed,
+    required this.name,
+    required this.username,
+    required this.tier,
+    required this.tierColor,
+    this.avatarUrl,
+    this.rollNumber,
+    this.isCurrentUser = false,
+  });
+
+  final String studentId;
+  final int rank;
+  final int rating;
+  final int peakRating;
+  final int contestsPlayed;
+  final String name;
+  final String username;
+  final String tier;
+  final String tierColor;
+  final String? avatarUrl;
+  final String? rollNumber;
+  final bool isCurrentUser;
+
+  /// [tierColor] parsed for Flutter; falls back to grey on a malformed value.
+  Color get color => RatingTier.parseHex(tierColor) ?? const Color(0xFF808080);
+
+  @override
+  List<Object?> get props => [studentId, rank, rating, username, isCurrentUser];
+}
+
 class RatingTier {
   const RatingTier(this.name, this.from, this.hex);
 

@@ -1,10 +1,11 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../../core/config/theme/app_colors.dart';
 import '../../../../core/network/api_response.dart';
 
 /// `GET /student/practice/leaderboard` → rows plus the caller's own standing.
-class LeaderboardPage extends Equatable {
-  const LeaderboardPage({
+class LeaderboardStandings extends Equatable {
+  const LeaderboardStandings({
     required this.rows,
     required this.pagination,
     required this.scope,
@@ -98,6 +99,18 @@ class LeaderboardScope {
         _ => scope,
       };
 }
+
+/// The medal tint for a finishing position — gold, silver, bronze, then neutral.
+///
+/// The same amber/slate/orange family the badge tiers use, but kept here rather
+/// than imported from the badges feature: these are ranks, not badges, and the
+/// two only happen to share a palette.
+TwShade rankShade(int rank) => switch (rank) {
+      1 => TwColors.amber,
+      2 => TwColors.slate,
+      3 => TwColors.orange,
+      _ => TwColors.slate,
+    };
 
 class LeaderboardPeriod {
   const LeaderboardPeriod._();

@@ -16,7 +16,7 @@ import '../../../../core/design/widgets/liquid_glass_navigation_bar.dart';
 import '../../../../core/design/widgets/sliver_liquid_glass_app_bar.dart';
 import '../../../../core/usecases/usecase.dart';
 import '../../../auth/presentation/bloc/auth/auth_bloc.dart';
-import '../../../rewards/domain/usecases/record_daily_visit_usecase.dart';
+import '../../../rewards/domain/usecases/rewards_usecases.dart';
 import '../widgets/glass_menu_sheet.dart';
 import '../widgets/student_drawer.dart';
 import '../widgets/student_nav.dart';

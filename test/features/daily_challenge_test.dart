@@ -11,7 +11,7 @@ import 'package:college_level/features/practice/domain/entities/practice_questio
 import 'package:college_level/features/practice/domain/usecases/practice_usecases.dart';
 import 'package:college_level/features/practice/presentation/bloc/daily_challenge_cubit.dart';
 import 'package:college_level/features/practice/presentation/bloc/daily_solve_cubit.dart';
-import 'package:college_level/features/rewards/domain/usecases/record_daily_visit_usecase.dart';
+import 'package:college_level/features/rewards/domain/usecases/rewards_usecases.dart';
 
 class _MockToday extends Mock implements GetDailyChallengeUseCase {}
 
