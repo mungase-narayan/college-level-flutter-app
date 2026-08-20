@@ -50,6 +50,120 @@ class ApiUrls {
   static const notificationsReadAll = '/notifications/read-all';
   static String notificationRead(String id) => '/notifications/$id/read';
 
+  // ── Teacher ───────────────────────────────────────────────────────────────
+  /// The one purpose-built teacher endpoint: stats, today's timetable, and the
+  /// courses this teacher is assigned to, aggregated server-side.
+  static const teacherDashboard = '/teacher/dashboard';
+
+  // ── Teacher: courses ──────────────────────────────────────────────────────
+  /// One row per (course, division) assignment — the same course repeats once
+  /// per section the teacher takes it for.
+  static const teacherCourses = '/teacher/courses';
+
+  /// Only the sections *this* teacher instructs; feeds the division selector.
+  static String teacherCourseDivisions(String id) =>
+      '/teacher/courses/$id/divisions';
+
+  /// The module → topic → material tree, scoped to one division. School-wide
+  /// content (`divisionId: null`) is merged in read-only.
+  static String teacherCourseTree(String id) => '/teacher/courses/$id/tree';
+
+  // ── Teacher: course content authoring ─────────────────────────────────────
+  static const teacherCourseModules = '/teacher/course-modules';
+  static String teacherCourseModule(String id) => '/teacher/course-modules/$id';
+  static const teacherCourseTopics = '/teacher/course-topics';
+  static String teacherCourseTopic(String id) => '/teacher/course-topics/$id';
+  static const teacherCourseMaterials = '/teacher/course-materials';
+  static String teacherCourseMaterial(String id) =>
+      '/teacher/course-materials/$id';
+
+  /// Material discussion. `divisionId` is a **required** query param on the GET.
+  static String teacherMaterialComments(String id) =>
+      '/teacher/course-materials/$id/comments';
+  static String teacherMaterialCommentReplies(String commentId) =>
+      '/teacher/course-material-comments/$commentId/replies';
+  static String teacherMaterialComment(String commentId) =>
+      '/teacher/course-material-comments/$commentId';
+
+  // ── Teacher: attendance ───────────────────────────────────────────────────
+  /// Sections the teacher instructs on a course. `courseId` is required.
+  static const teacherAttendanceDivisions = '/teacher/attendance/divisions';
+
+  /// `{data, pagination}`. Omitting **both** `courseId` and `divisionId` spans
+  /// every course-division pair the teacher instructs.
+  static const teacherAttendanceSessions = '/teacher/attendance/sessions';
+  static String teacherAttendanceSession(String id) =>
+      '/teacher/attendance/sessions/$id';
+
+  /// Upsert keyed on (session, student); rejected once the session is finalized.
+  static String teacherAttendanceMark(String id) =>
+      '/teacher/attendance/sessions/$id/mark';
+  static String teacherAttendanceFinalize(String id) =>
+      '/teacher/attendance/sessions/$id/finalize';
+
+  /// Today's timetable slots. `sessionId` is non-null once a session exists for
+  /// that slot, which is what distinguishes a pending slot from a done one.
+  static const teacherAttendanceToday = '/teacher/attendance/today';
+
+  /// Course + division rollup. Both params required.
+  static const teacherAttendanceAnalytics = '/teacher/attendance/analytics';
+
+  // ── Assessments (assignments & quizzes) ───────────────────────────────────
+  // Authoring lives on its own router, **not** under `/teacher` — only the
+  // grading side below does. The two are easy to confuse.
+  static const assessments = '/assessments';
+  static String assessment(String id) => '/assessments/$id';
+  static String assessmentQuestions(String id) => '/assessments/$id/questions';
+
+  /// Detaches a question. The id is the **join-row** id
+  /// (`AssessmentQuestionItem.id`), never the question's own id.
+  static String assessmentQuestion(String id, String assessmentQuestionId) =>
+      '/assessments/$id/questions/$assessmentQuestionId';
+
+  /// Attachable questions, already excluding the ones on this assessment.
+  /// Only available in edit mode — a draft has no id yet.
+  static String assessmentQuestionBank(String id) =>
+      '/assessments/$id/questions/bank';
+
+  /// Releases scores to students, or withdraws them again.
+  static String assessmentPublishResults(String id) =>
+      '/assessments/$id/publish-results';
+
+  /// The question source while **creating**, where no assessment id exists yet.
+  /// Unlike the bank endpoint it does not exclude already-picked questions.
+  static const teacherQuestions = '/teacher/questions';
+
+  // ── Assessment grading ────────────────────────────────────────────────────
+  static String teacherAssignmentOverview(String id) =>
+      '/teacher/assignments/$id/overview';
+  static String teacherAssignmentStatistics(String id) =>
+      '/teacher/assignments/$id/statistics';
+
+  /// The full result sheet, including students who never attempted.
+  static String teacherAssignmentResults(String id) =>
+      '/teacher/assignments/$id/results';
+  static String teacherAssignmentSubmission(String id, String submissionId) =>
+      '/teacher/assignments/$id/submissions/$submissionId';
+  static String teacherAssignmentEvaluate(String id, String submissionId) =>
+      '/teacher/assignments/$id/submissions/$submissionId/evaluate';
+
+  /// Reopens a proctoring auto-submit so the student can resume.
+  static String teacherAssignmentReattempt(String id, String submissionId) =>
+      '/teacher/assignments/$id/submissions/$submissionId/allow-reattempt';
+
+  // ── Course enrolments ─────────────────────────────────────────────────────
+  /// Guarded `school_admin` + **`teacher`** only — a class_teacher or hod gets
+  /// 403 on every verb here, including the list.
+  static const courseEnrollments = '/course-enrollments';
+  static String courseEnrollment(String id) => '/course-enrollments/$id';
+  static String courseEnrollmentStatus(String id) =>
+      '/course-enrollments/$id/status';
+
+  /// The enrol picker's source. Open to the whole teacher family, unlike the
+  /// enrolment writes above.
+  static String unenrolledStudents(String courseId) =>
+      '/courses/$courseId/unenrolled-students';
+
   // ── Student: courses ──────────────────────────────────────────────────────
   static const studentCourses = '/student/courses';
   static String studentCourse(String id) => '/student/courses/$id';

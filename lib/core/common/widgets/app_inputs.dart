@@ -12,6 +12,36 @@ import '../../design/widgets/liquid_glass_search_bar.dart';
 import 'app_dialogs.dart';
 
 /// Labelled text field matching the React `AppInput` / shadcn `Input`.
+/// Squeezes a field down to [AppTheme.controlHeightSm].
+///
+/// Height comes from the content padding rather than a fixed box, so an error
+/// message still pushes the field open instead of being clipped. The icon
+/// constraints matter as much as the padding: `prefixIcon` defaults to a
+/// 48×48 minimum, which on its own would hold the field at the taller size.
+InputDecoration _denseDecoration({
+  required bool dense,
+  required InputDecoration base,
+}) {
+  if (!dense) return base;
+
+  const iconBox = BoxConstraints(
+    minWidth: AppTheme.controlHeightSm,
+    minHeight: AppTheme.controlHeightSm,
+  );
+  return base.copyWith(
+    isDense: true,
+    // An exact box rather than tuned padding: a dropdown's arrow and a text
+    // field's content have different natural heights, so padding alone leaves
+    // them a couple of pixels apart.
+    constraints: const BoxConstraints.tightFor(
+      height: AppTheme.controlHeightSm,
+    ),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+    prefixIconConstraints: iconBox,
+    suffixIconConstraints: iconBox,
+  );
+}
+
 class AppInput extends StatelessWidget {
   const AppInput({
     super.key,
@@ -33,7 +63,13 @@ class AppInput extends StatelessWidget {
     this.validator,
     this.focusNode,
     this.inputFormatters,
+    this.dense = false,
   });
+
+  /// Shrinks the field to [AppTheme.controlHeightSm] so it lines up with an
+  /// [AppButtonSize.sm] button in a filter bar. Ignored once the field is
+  /// multi-line, which has to grow with its content.
+  final bool dense;
 
   final TextEditingController? controller;
   final String? label;
@@ -79,6 +115,7 @@ class AppInput extends StatelessWidget {
         validator: validator,
         focusNode: focusNode,
         inputFormatters: inputFormatters,
+        dense: dense,
       );
     }
 
@@ -106,12 +143,16 @@ class AppInput extends StatelessWidget {
           validator: validator,
           inputFormatters: inputFormatters,
           style: theme.textTheme.bodyMedium,
-          decoration: InputDecoration(
-            hintText: hint,
-            errorText: errorText,
-            prefixIcon: prefixIcon == null ? null : Icon(prefixIcon, size: 18),
-            suffixIcon: suffix,
-            errorMaxLines: 3,
+          decoration: _denseDecoration(
+            dense: dense && maxLines == 1 && minLines == null,
+            base: InputDecoration(
+              hintText: hint,
+              errorText: errorText,
+              prefixIcon:
+                  prefixIcon == null ? null : Icon(prefixIcon, size: 18),
+              suffixIcon: suffix,
+              errorMaxLines: 3,
+            ),
           ),
         ),
       ],
@@ -179,12 +220,17 @@ class AppSearchField extends StatefulWidget {
   const AppSearchField({
     super.key,
     required this.onChanged,
+    this.dense = false,
     this.hint = 'Search…',
     this.initialValue,
     this.debounce = const Duration(milliseconds: 350),
   });
 
   final ValueChanged<String> onChanged;
+
+  /// Matches an [AppButtonSize.sm] button, for a filter bar.
+  final bool dense;
+
   final String hint;
   final String? initialValue;
   final Duration debounce;
@@ -230,6 +276,7 @@ class _AppSearchFieldState extends State<AppSearchField> {
         hint: widget.hint,
         initialValue: widget.initialValue,
         debounce: widget.debounce,
+        dense: widget.dense,
       );
     }
 
@@ -238,17 +285,21 @@ class _AppSearchFieldState extends State<AppSearchField> {
       onChanged: _onChanged,
       textInputAction: TextInputAction.search,
       style: Theme.of(context).textTheme.bodyMedium,
-      decoration: InputDecoration(
-        hintText: widget.hint,
-        prefixIcon: const Icon(Icons.search_rounded, size: 18),
-        suffixIcon: _controller.text.isEmpty
-            ? null
-            : IconButton(
-                onPressed: _clear,
-                icon: const Icon(Icons.close_rounded, size: 16),
-                tooltip: 'Clear',
-              ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: _denseDecoration(
+        dense: widget.dense,
+        base: InputDecoration(
+          hintText: widget.hint,
+          prefixIcon: const Icon(Icons.search_rounded, size: 18),
+          suffixIcon: _controller.text.isEmpty
+              ? null
+              : IconButton(
+                  onPressed: _clear,
+                  icon: const Icon(Icons.close_rounded, size: 16),
+                  tooltip: 'Clear',
+                ),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        ),
       ),
     );
   }
@@ -265,6 +316,7 @@ class AppSelect<T> extends StatelessWidget {
     this.label,
     this.hint,
     this.isExpanded = true,
+    this.dense = false,
   });
 
   final T? value;
@@ -273,6 +325,9 @@ class AppSelect<T> extends StatelessWidget {
   final String? label;
   final String? hint;
   final bool isExpanded;
+
+  /// Matches an [AppButtonSize.sm] button, for a filter bar.
+  final bool dense;
 
   @override
   Widget build(BuildContext context) {
@@ -285,6 +340,7 @@ class AppSelect<T> extends StatelessWidget {
         onChanged: onChanged,
         label: label,
         hint: hint,
+        dense: dense,
       );
     }
 
@@ -301,8 +357,12 @@ class AppSelect<T> extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppTheme.radiusMd),
           style: theme.textTheme.bodyMedium,
           hint: hint == null ? null : Text(hint!, style: theme.textTheme.bodyMedium),
-          decoration: const InputDecoration(
-            contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: _denseDecoration(
+            dense: dense,
+            base: const InputDecoration(
+              contentPadding:
+                  EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            ),
           ),
           items: [
             for (final item in items)
@@ -335,6 +395,7 @@ class _GlassSelect<T> extends StatelessWidget {
     required this.onChanged,
     this.label,
     this.hint,
+    this.dense = false,
   });
 
   final T? value;
@@ -342,6 +403,7 @@ class _GlassSelect<T> extends StatelessWidget {
   final ValueChanged<T?> onChanged;
   final String? label;
   final String? hint;
+  final bool dense;
 
   @override
   Widget build(BuildContext context) {
@@ -381,9 +443,11 @@ class _GlassSelect<T> extends StatelessWidget {
             spec: glass.control,
             radius: GlassRadius.md,
             showHighlight: false,
-            padding: const EdgeInsets.symmetric(
+            // Vertical padding rather than a fixed height, so the row still
+            // sizes to its text — 9 lands it on AppTheme.controlHeightSm.
+            padding: EdgeInsets.symmetric(
               horizontal: GlassSpacing.lg - 2,
-              vertical: 14,
+              vertical: dense ? 8 : 14,
             ),
             child: Row(
               children: [

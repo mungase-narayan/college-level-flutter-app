@@ -1,6 +1,6 @@
 import 'package:college_level/core/common/bloc/remote_cubit.dart';
-import 'package:college_level/features/assessments/domain/entities/assessment_detail.dart';
-import 'package:college_level/features/assessments/domain/entities/student_assessment.dart';
+import 'package:college_level/features/student/assessments/domain/entities/assessment_detail.dart';
+import 'package:college_level/features/student/assessments/domain/entities/student_assessment.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Selecting a different option used to leave the UI unchanged until the

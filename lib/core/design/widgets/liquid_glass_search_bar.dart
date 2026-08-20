@@ -25,6 +25,7 @@ class LiquidGlassSearchBar extends StatefulWidget {
     this.autofocus = false,
     this.showCancel = true,
     this.onCancel,
+    this.dense = false,
   });
 
   final ValueChanged<String> onChanged;
@@ -41,6 +42,10 @@ class LiquidGlassSearchBar extends StatefulWidget {
   /// caller, so requiring a callback just to get iOS's standard affordance meant
   /// no screen ever had it.
   final bool showCancel;
+
+  /// Shrinks the capsule to [AppTheme.controlHeightSm], matching a small
+  /// button in the same filter bar.
+  final bool dense;
 
   /// Called *after* the field has cleared itself and given up focus, for a screen
   /// that has its own search mode to leave. Optional; the button appears without
@@ -164,7 +169,10 @@ class _LiquidGlassSearchBarState extends State<LiquidGlassSearchBar> {
                     enabledBorder: InputBorder.none,
                     focusedBorder: InputBorder.none,
                     filled: false,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 11),
+                    // 8 lands the capsule on AppTheme.controlHeightSm, so a
+                    // filter bar's search box matches the button beside it.
+                    contentPadding:
+                        EdgeInsets.symmetric(vertical: widget.dense ? 8 : 11),
                   ),
                 ),
               ),

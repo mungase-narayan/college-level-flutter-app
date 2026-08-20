@@ -8,13 +8,13 @@ import 'package:mocktail/mocktail.dart';
 import 'package:college_level/core/config/theme/app_theme.dart';
 import 'package:college_level/core/design/glass.dart';
 import 'package:college_level/core/error/failures.dart';
-import 'package:college_level/features/calendar/domain/entities/calendar_entry.dart';
-import 'package:college_level/features/calendar/domain/entities/calendar_view.dart';
-import 'package:college_level/features/calendar/domain/usecases/calendar_usecases.dart';
-import 'package:college_level/features/calendar/presentation/bloc/calendar_cubit.dart';
-import 'package:college_level/features/calendar/presentation/bloc/today_sessions_cubit.dart';
-import 'package:college_level/features/calendar/presentation/pages/calendar_page.dart';
-import 'package:college_level/features/dashboard/presentation/widgets/today_sessions_card.dart';
+import 'package:college_level/features/student/calendar/domain/entities/calendar_entry.dart';
+import 'package:college_level/features/student/calendar/domain/entities/calendar_view.dart';
+import 'package:college_level/features/student/calendar/domain/usecases/calendar_usecases.dart';
+import 'package:college_level/features/student/calendar/presentation/bloc/calendar_cubit.dart';
+import 'package:college_level/features/student/calendar/presentation/bloc/today_sessions_cubit.dart';
+import 'package:college_level/features/student/calendar/presentation/pages/calendar_page.dart';
+import 'package:college_level/features/student/dashboard/presentation/widgets/today_sessions_card.dart';
 
 class _MockGetCalendar extends Mock implements GetCalendarUseCase {}
 

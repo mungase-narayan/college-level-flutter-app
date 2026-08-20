@@ -8,13 +8,13 @@ import 'package:college_level/core/constants/api_urls.dart';
 import 'package:college_level/core/error/failures.dart';
 import 'package:college_level/core/network/api_response.dart';
 import 'package:college_level/core/usecases/usecase.dart';
-import 'package:college_level/features/rewards/data/models/rewards_models.dart';
-import 'package:college_level/features/rewards/domain/entities/rewards.dart';
-import 'package:college_level/features/rewards/domain/usecases/rewards_usecases.dart';
-import 'package:college_level/features/rewards/presentation/bloc/order_chat_cubit.dart';
-import 'package:college_level/features/rewards/presentation/bloc/store_cubit.dart';
-import 'package:college_level/features/rewards/presentation/bloc/wallet_cubit.dart';
-import 'package:college_level/features/rewards/presentation/pages/wallet_page.dart';
+import 'package:college_level/features/student/rewards/data/models/rewards_models.dart';
+import 'package:college_level/features/student/rewards/domain/entities/rewards.dart';
+import 'package:college_level/features/student/rewards/domain/usecases/rewards_usecases.dart';
+import 'package:college_level/features/student/rewards/presentation/bloc/order_chat_cubit.dart';
+import 'package:college_level/features/student/rewards/presentation/bloc/store_cubit.dart';
+import 'package:college_level/features/student/rewards/presentation/bloc/wallet_cubit.dart';
+import 'package:college_level/features/student/rewards/presentation/pages/wallet_page.dart';
 
 class _MockGetWallet extends Mock implements GetWalletUseCase {}
 

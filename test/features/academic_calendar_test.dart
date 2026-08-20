@@ -7,11 +7,11 @@ import 'package:college_level/core/config/theme/app_colors.dart';
 import 'package:college_level/core/constants/api_urls.dart';
 import 'package:college_level/core/error/failures.dart';
 import 'package:college_level/core/usecases/usecase.dart';
-import 'package:college_level/features/academic_calendar/data/models/academic_calendar_model.dart';
-import 'package:college_level/features/academic_calendar/domain/entities/academic_calendar.dart';
-import 'package:college_level/features/academic_calendar/domain/usecases/academic_calendar_usecases.dart';
-import 'package:college_level/features/academic_calendar/presentation/bloc/academic_calendar_cubit.dart';
-import 'package:college_level/features/academic_calendar/presentation/widgets/academic_calendar_pdf.dart';
+import 'package:college_level/features/student/academic_calendar/data/models/academic_calendar_model.dart';
+import 'package:college_level/features/student/academic_calendar/domain/entities/academic_calendar.dart';
+import 'package:college_level/features/student/academic_calendar/domain/usecases/academic_calendar_usecases.dart';
+import 'package:college_level/features/student/academic_calendar/presentation/bloc/academic_calendar_cubit.dart';
+import 'package:college_level/features/student/academic_calendar/presentation/widgets/academic_calendar_pdf.dart';
 
 class _MockGetCalendar extends Mock implements GetMyAcademicCalendarUseCase {}
 

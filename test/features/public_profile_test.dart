@@ -5,10 +5,10 @@ import 'package:mocktail/mocktail.dart';
 import 'package:college_level/core/common/bloc/remote_cubit.dart';
 import 'package:college_level/core/constants/api_urls.dart';
 import 'package:college_level/core/error/failures.dart';
-import 'package:college_level/features/public_profile/data/models/public_profile_model.dart';
-import 'package:college_level/features/public_profile/domain/entities/public_profile.dart';
-import 'package:college_level/features/public_profile/domain/usecases/get_public_profile_usecase.dart';
-import 'package:college_level/features/public_profile/presentation/bloc/public_profile_cubit.dart';
+import 'package:college_level/features/student/public_profile/data/models/public_profile_model.dart';
+import 'package:college_level/features/student/public_profile/domain/entities/public_profile.dart';
+import 'package:college_level/features/student/public_profile/domain/usecases/get_public_profile_usecase.dart';
+import 'package:college_level/features/student/public_profile/presentation/bloc/public_profile_cubit.dart';
 
 class _MockGetPublicProfile extends Mock implements GetPublicProfileUseCase {}
 

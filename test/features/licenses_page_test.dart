@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:college_level/core/config/theme/app_theme.dart';
-import 'package:college_level/features/settings/presentation/pages/licenses_page.dart';
+import 'package:college_level/features/shared/settings/presentation/pages/licenses_page.dart';
 
 /// Attribution has to be complete to be worth anything, so the grouping is what
 /// these cover: one [LicenseEntry] may apply to several packages, and every

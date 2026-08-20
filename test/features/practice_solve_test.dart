@@ -5,10 +5,10 @@ import 'package:mocktail/mocktail.dart';
 import 'package:college_level/core/common/bloc/remote_cubit.dart';
 import 'package:college_level/core/error/failures.dart';
 import 'package:college_level/core/usecases/usecase.dart';
-import 'package:college_level/features/practice/domain/entities/practice_attempt.dart';
-import 'package:college_level/features/practice/domain/entities/practice_question.dart';
-import 'package:college_level/features/practice/domain/usecases/practice_usecases.dart';
-import 'package:college_level/features/practice/presentation/bloc/practice_question_cubit.dart';
+import 'package:college_level/features/student/practice/domain/entities/practice_attempt.dart';
+import 'package:college_level/features/student/practice/domain/entities/practice_question.dart';
+import 'package:college_level/features/student/practice/domain/usecases/practice_usecases.dart';
+import 'package:college_level/features/student/practice/presentation/bloc/practice_question_cubit.dart';
 
 class _MockGetQuestion extends Mock implements GetPracticeQuestionUseCase {}
 

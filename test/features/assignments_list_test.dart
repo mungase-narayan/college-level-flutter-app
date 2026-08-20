@@ -6,11 +6,11 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:college_level/core/error/failures.dart';
 import 'package:college_level/core/network/api_response.dart';
-import 'package:college_level/features/assessments/domain/entities/student_assessment.dart';
-import 'package:college_level/features/assessments/domain/usecases/list_course_assessments_usecase.dart';
-import 'package:college_level/features/assessments/presentation/bloc/assignments_cubit.dart';
-import 'package:college_level/features/courses/domain/entities/course.dart';
-import 'package:college_level/features/courses/domain/usecases/course_usecases.dart';
+import 'package:college_level/features/student/assessments/domain/entities/student_assessment.dart';
+import 'package:college_level/features/student/assessments/domain/usecases/list_course_assessments_usecase.dart';
+import 'package:college_level/features/student/assessments/presentation/bloc/assignments_cubit.dart';
+import 'package:college_level/features/student/courses/domain/entities/course.dart';
+import 'package:college_level/features/student/courses/domain/usecases/course_usecases.dart';
 
 class _MockListAll extends Mock implements ListAllAssessmentsUseCase {}
 

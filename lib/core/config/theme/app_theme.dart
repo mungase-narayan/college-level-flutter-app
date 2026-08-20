@@ -49,6 +49,14 @@ class AppTheme {
   /// `--radius` is 0.1rem in the CSS, but real UI overrides it with literal
   /// `rounded-xl` / `rounded-2xl` almost everywhere — so those are the values
   /// worth porting.
+  /// Control heights, shared by [AppButton] and every field in the kit so a
+  /// filter bar's select, search box and button line up instead of drifting.
+  /// A dense control matches [AppButtonSize.sm]; the default matches
+  /// [AppButtonSize.md].
+  static const controlHeightSm = 38.0;
+  static const controlHeightMd = 48.0;
+  static const controlHeightLg = 54.0;
+
   static const radiusSm = 8.0;
   static const radiusMd = 12.0;
   static const radiusLg = 16.0;

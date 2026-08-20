@@ -4,10 +4,10 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:college_level/core/error/failures.dart';
 import 'package:college_level/core/usecases/usecase.dart';
-import 'package:college_level/features/assessments/domain/entities/assessment_detail.dart';
-import 'package:college_level/features/assessments/domain/entities/student_assessment.dart';
-import 'package:college_level/features/assessments/domain/usecases/attempt_usecases.dart';
-import 'package:college_level/features/assessments/presentation/bloc/assessment_detail_cubit.dart';
+import 'package:college_level/features/student/assessments/domain/entities/assessment_detail.dart';
+import 'package:college_level/features/student/assessments/domain/entities/student_assessment.dart';
+import 'package:college_level/features/student/assessments/domain/usecases/attempt_usecases.dart';
+import 'package:college_level/features/student/assessments/presentation/bloc/assessment_detail_cubit.dart';
 
 class _MockGetDetail extends Mock implements GetAssessmentDetailUseCase {}
 

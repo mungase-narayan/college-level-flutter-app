@@ -8,11 +8,11 @@ import 'package:college_level/core/constants/api_urls.dart';
 import 'package:college_level/core/error/failures.dart';
 import 'package:college_level/core/network/api_response.dart';
 import 'package:college_level/core/usecases/usecase.dart';
-import 'package:college_level/features/rating/data/models/contest_rating_model.dart';
-import 'package:college_level/features/rating/domain/entities/contest_rating.dart';
-import 'package:college_level/features/rating/domain/usecases/get_my_rating_usecase.dart';
-import 'package:college_level/features/rating/presentation/bloc/rating_cubit.dart';
-import 'package:college_level/features/rating/presentation/bloc/rating_leaderboard_cubit.dart';
+import 'package:college_level/features/student/rating/data/models/contest_rating_model.dart';
+import 'package:college_level/features/student/rating/domain/entities/contest_rating.dart';
+import 'package:college_level/features/student/rating/domain/usecases/get_my_rating_usecase.dart';
+import 'package:college_level/features/student/rating/presentation/bloc/rating_cubit.dart';
+import 'package:college_level/features/student/rating/presentation/bloc/rating_leaderboard_cubit.dart';
 
 class _MockGetMyRating extends Mock implements GetMyRatingUseCase {}
 

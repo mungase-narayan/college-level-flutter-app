@@ -10,11 +10,11 @@ import 'package:college_level/core/error/failures.dart';
 import 'package:college_level/core/network/api_response.dart';
 import 'package:college_level/core/usecases/usecase.dart';
 import 'package:college_level/core/utils/formatters.dart';
-import 'package:college_level/features/attendance/data/models/attendance_model.dart';
-import 'package:college_level/features/attendance/domain/entities/attendance.dart';
-import 'package:college_level/features/attendance/domain/usecases/attendance_usecases.dart';
-import 'package:college_level/features/attendance/presentation/bloc/attendance_overview_cubit.dart';
-import 'package:college_level/features/attendance/presentation/bloc/attendance_sessions_cubit.dart';
+import 'package:college_level/features/student/attendance/data/models/attendance_model.dart';
+import 'package:college_level/features/student/attendance/domain/entities/attendance.dart';
+import 'package:college_level/features/student/attendance/domain/usecases/attendance_usecases.dart';
+import 'package:college_level/features/student/attendance/presentation/bloc/attendance_overview_cubit.dart';
+import 'package:college_level/features/student/attendance/presentation/bloc/attendance_sessions_cubit.dart';
 
 class _MockListSessions extends Mock implements ListAttendanceSessionsUseCase {}
 

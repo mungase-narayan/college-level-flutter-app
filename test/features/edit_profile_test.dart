@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:college_level/features/auth/domain/username_rules.dart';
+import 'package:college_level/features/shared/auth/domain/username_rules.dart';
 
 /// Ported verbatim from the web app's zod schema. Drift here means the two clients
 /// disagree about what the API accepts.

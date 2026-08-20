@@ -8,11 +8,11 @@ import 'package:college_level/core/config/theme/app_colors.dart';
 import 'package:college_level/core/error/failures.dart';
 import 'package:college_level/core/network/api_response.dart';
 import 'package:college_level/core/usecases/usecase.dart';
-import 'package:college_level/features/announcements/data/models/announcement_model.dart';
-import 'package:college_level/features/announcements/domain/entities/announcement.dart';
-import 'package:college_level/features/announcements/domain/usecases/announcement_usecases.dart';
-import 'package:college_level/features/announcements/presentation/bloc/announcement_detail_cubit.dart';
-import 'package:college_level/features/announcements/presentation/bloc/announcements_cubit.dart';
+import 'package:college_level/features/student/announcements/data/models/announcement_model.dart';
+import 'package:college_level/features/student/announcements/domain/entities/announcement.dart';
+import 'package:college_level/features/student/announcements/domain/usecases/announcement_usecases.dart';
+import 'package:college_level/features/student/announcements/presentation/bloc/announcement_detail_cubit.dart';
+import 'package:college_level/features/student/announcements/presentation/bloc/announcements_cubit.dart';
 
 class _MockList extends Mock implements ListAnnouncementsUseCase {}
 

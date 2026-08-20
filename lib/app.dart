@@ -12,7 +12,7 @@ import 'core/design/platform/app_platform.dart';
 import 'core/design/platform/glass_scope.dart';
 import 'core/design/theme/liquid_glass_theme.dart';
 import 'core/design/widgets/glass_backdrop.dart';
-import 'features/auth/presentation/bloc/auth/auth_bloc.dart';
+import 'features/shared/auth/presentation/bloc/auth/auth_bloc.dart';
 
 /// The provider tree, mirroring the order in `src/App.tsx`:
 /// ThemeProvider → Toaster → redux Provider → PersistGate → QueryClientProvider

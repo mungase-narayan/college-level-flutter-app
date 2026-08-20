@@ -38,6 +38,7 @@ class LiquidGlassInput extends StatefulWidget {
     this.validator,
     this.focusNode,
     this.inputFormatters,
+    this.dense = false,
   });
 
   final TextEditingController? controller;
@@ -52,6 +53,10 @@ class LiquidGlassInput extends StatefulWidget {
   final int maxLines;
   final int? minLines;
   final bool enabled;
+
+  /// Shrinks a single-line field to [AppTheme.controlHeightSm] so it lines up
+  /// with a small button in a filter bar. Ignored when multiline.
+  final bool dense;
   final Iterable<String>? autofillHints;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
@@ -204,7 +209,9 @@ class _LiquidGlassInputState extends State<LiquidGlassInput> {
                         // The error is rendered below the capsule instead, so the
                         // glass surface keeps a constant height as it appears.
                         errorStyle: const TextStyle(height: 0, fontSize: 0),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                        contentPadding: EdgeInsets.symmetric(
+                          vertical: widget.dense && !multiline ? 8 : 14,
+                        ),
                       ),
                     ),
                   ),
