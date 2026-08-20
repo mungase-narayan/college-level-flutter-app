@@ -1,6 +1,8 @@
 import '../../../../../core/constants/api_urls.dart';
 import '../../../../../core/network/api_response.dart';
 import '../../../../../core/network/dio_client.dart';
+import '../../../../../core/utils/json_coerce.dart';
+import '../../domain/entities/student_assessment.dart';
 import '../models/assessment_detail_model.dart';
 import '../models/student_assessment_model.dart';
 
@@ -104,6 +106,34 @@ class AssessmentService {
       body: {'answers': ?answers, 'note': ?note, 'fileIds': ?fileIds},
       parse: (_) => null,
     );
+  }
+
+  /// `POST /student/assignments/:id/proctor-events` — records one violation.
+  ///
+  /// The response, not the client, is the authority: it carries the running
+  /// total and whether that total has tripped the assessment's limit.
+  Future<ProctorEventResult> recordProctorEvent({
+    required String assessmentId,
+    required String eventType,
+    required String occurredAt,
+    Map<String, dynamic>? meta,
+  }) async {
+    final response = await _client.post(
+      ApiUrls.studentAssignmentProctorEvents(assessmentId),
+      body: {
+        'eventType': eventType,
+        'occurredAt': occurredAt,
+        'meta': ?meta,
+      },
+      parse: (data) {
+        final json = (data as Map<String, dynamic>?) ?? const {};
+        return ProctorEventResult(
+          violationCount: asInt(json['violationCount']),
+          shouldAutoSubmit: json['shouldAutoSubmit'] as bool? ?? false,
+        );
+      },
+    );
+    return response.data;
   }
 
   /// `POST /student/assignments/:id/submit` — finalizes the attempt.

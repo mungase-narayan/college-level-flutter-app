@@ -53,6 +53,7 @@ class AppTheme {
   /// filter bar's select, search box and button line up instead of drifting.
   /// A dense control matches [AppButtonSize.sm]; the default matches
   /// [AppButtonSize.md].
+  static const controlHeightXs = 30.0;
   static const controlHeightSm = 38.0;
   static const controlHeightMd = 48.0;
   static const controlHeightLg = 54.0;

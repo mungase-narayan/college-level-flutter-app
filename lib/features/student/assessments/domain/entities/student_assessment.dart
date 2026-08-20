@@ -23,6 +23,8 @@ class StudentAssessment extends Equatable {
     this.isAllowResubmission = false,
     this.maxAttempt = 1,
     this.isProctored = false,
+    this.maxViolations,
+    this.proctoringConfig,
     this.durationMinutes,
     this.submission,
     this.course,
@@ -50,6 +52,15 @@ class StudentAssessment extends Equatable {
   final bool isAllowResubmission;
   final int maxAttempt;
   final bool isProctored;
+
+  /// How many violations the attempt tolerates before the server auto-submits
+  /// it. Null means the server enforces no limit.
+  final int? maxViolations;
+
+  /// Which signals proctoring watches. Null means the server sent none, in
+  /// which case nothing is watched — the teacher turns signals on explicitly.
+  final ProctoringConfig? proctoringConfig;
+
   final int? durationMinutes;
 
   /// The student's latest attempt, or null if they've never started.
@@ -226,4 +237,78 @@ class AssessmentStatus {
         evaluated => 'Results published',
         _ => '',
       };
+}
+
+/// Which signals a proctored attempt watches, mirroring the web
+/// `ProctoringConfig`. The teacher turns each on when authoring the assessment.
+///
+/// [fullscreen], [rightClick], [resize] and [print] describe a desktop browser
+/// and have no mobile equivalent, so they are parsed and carried but never
+/// acted on here — inventing a mobile stand-in would report violations the
+/// student could not have committed.
+class ProctoringConfig extends Equatable {
+  const ProctoringConfig({
+    this.fullscreen = false,
+    this.tabSwitch = false,
+    this.copyPaste = false,
+    this.rightClick = false,
+    this.resize = false,
+    this.print = false,
+  });
+
+  final bool fullscreen;
+
+  /// Leaving the app — the mobile reading of the web's tab-switch and blur.
+  final bool tabSwitch;
+
+  /// Copying question text or pasting into an answer.
+  final bool copyPaste;
+
+  final bool rightClick;
+  final bool resize;
+  final bool print;
+
+  /// Whether anything here can actually be observed on a phone.
+  bool get hasMobileSignal => tabSwitch || copyPaste;
+
+  @override
+  List<Object?> get props =>
+      [fullscreen, tabSwitch, copyPaste, rightClick, resize, print];
+}
+
+/// The proctor-event types the backend accepts, mirroring the web union.
+class ProctorEventType {
+  const ProctorEventType._();
+
+  static const tabSwitch = 'tab_switch';
+  static const windowBlur = 'window_blur';
+  static const copy = 'copy';
+  static const paste = 'paste';
+
+  static String label(String value) => switch (value) {
+        'fullscreen_exit' => 'Exited fullscreen',
+        tabSwitch => 'Left the app',
+        windowBlur => 'Left the app',
+        copy => 'Copied content',
+        paste => 'Pasted content',
+        'right_click' => 'Right-clicked',
+        'resize' => 'Resized window',
+        'print' => 'Attempted to print',
+        _ => value,
+      };
+}
+
+/// What `POST .../proctor-events` answers with: the server's authoritative
+/// tally, and whether that tally has tripped the limit.
+class ProctorEventResult extends Equatable {
+  const ProctorEventResult({
+    required this.violationCount,
+    required this.shouldAutoSubmit,
+  });
+
+  final int violationCount;
+  final bool shouldAutoSubmit;
+
+  @override
+  List<Object?> get props => [violationCount, shouldAutoSubmit];
 }

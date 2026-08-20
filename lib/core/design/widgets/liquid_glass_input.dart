@@ -39,6 +39,7 @@ class LiquidGlassInput extends StatefulWidget {
     this.focusNode,
     this.inputFormatters,
     this.dense = false,
+    this.compact = false,
   });
 
   final TextEditingController? controller;
@@ -57,6 +58,10 @@ class LiquidGlassInput extends StatefulWidget {
   /// Shrinks a single-line field to [AppTheme.controlHeightSm] so it lines up
   /// with a small button in a filter bar. Ignored when multiline.
   final bool dense;
+
+  /// One step tighter again — [AppTheme.controlHeightXs], to match an xs
+  /// badge-sized control sitting beside it in the same row.
+  final bool compact;
   final Iterable<String>? autofillHints;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
@@ -210,7 +215,13 @@ class _LiquidGlassInputState extends State<LiquidGlassInput> {
                         // glass surface keeps a constant height as it appears.
                         errorStyle: const TextStyle(height: 0, fontSize: 0),
                         contentPadding: EdgeInsets.symmetric(
-                          vertical: widget.dense && !multiline ? 8 : 14,
+                          vertical: multiline
+                              ? 14
+                              : widget.compact
+                                  ? 4
+                                  : widget.dense
+                                      ? 8
+                                      : 14,
                         ),
                       ),
                     ),

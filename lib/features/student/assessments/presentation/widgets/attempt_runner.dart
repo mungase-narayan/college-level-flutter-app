@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
@@ -14,8 +15,11 @@ import '../../../../../core/config/theme/app_colors.dart';
 import '../../../../../core/config/theme/app_theme.dart';
 import '../../../../../core/utils/formatters.dart';
 import '../../../../shared/files/domain/usecases/file_usecases.dart';
+import '../../../../shared/shell/presentation/widgets/student_nav.dart';
 import '../../../../shared/files/presentation/widgets/attachment_tile.dart';
 import '../../domain/entities/assessment_detail.dart';
+import '../../domain/entities/student_assessment.dart';
+import '../../domain/usecases/attempt_usecases.dart';
 import '../bloc/assessment_detail_cubit.dart';
 
 /// Where an attachment comes from. iOS cannot span the document browser and the
@@ -45,15 +49,98 @@ class _AttemptRunnerState extends State<AttemptRunner> with WidgetsBindingObserv
   Timer? _clock;
   Duration? _remaining;
 
-  /// Counted locally so the student sees a warning immediately; the server
-  /// remains the authority on the violation total.
-  int _violations = 0;
+  /// The server's tally, seeded from the attempt so a resumed session shows
+  /// what the student has already used rather than restarting at zero. Each
+  /// report replaces it with the count the server answers with — the client
+  /// never does its own arithmetic on it.
+  late int _violations = widget.detail.submission?.violationCount ?? 0;
+
+  /// Reports are chained so two signals firing together cannot race the
+  /// counter, and so a burst is applied in the order it happened.
+  Future<void> _reports = Future.value();
+
+  /// The threshold fires exactly once: the auto-submit is already in flight for
+  /// every later event, and a second submit would error over the first.
+  bool _thresholdFired = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _startClock();
+  }
+
+  /// The signals the teacher switched on. Null while the assessment is not
+  /// proctored, or when the server sent no config at all.
+  ProctoringConfig? get _config => widget.detail.assessment.isProctored
+      ? widget.detail.assessment.proctoringConfig
+      : null;
+
+  /// Records a violation server-side and acts on what comes back.
+  ///
+  /// Failures are swallowed on purpose: a dropped report must not take the
+  /// attempt down with it, and the server re-tallies from its own events when
+  /// the next one lands.
+  void _reportViolation(String eventType, {Map<String, dynamic>? meta}) {
+    if (_thresholdFired) return;
+    final occurredAt = DateTime.now();
+
+    _reports = _reports.then((_) async {
+      if (_thresholdFired || !mounted) return;
+
+      final result = await sl<RecordProctorEventUseCase>()(
+        ProctorEventParams(
+          assessmentId: widget.detail.assessment.id,
+          eventType: eventType,
+          occurredAt: occurredAt,
+          meta: meta,
+        ),
+      );
+      if (!mounted) return;
+
+      result.fold((_) {}, (event) {
+        setState(() => _violations = event.violationCount);
+
+        // The limit is enforced on both sides. `shouldAutoSubmit` is the
+        // server's word and is authoritative, but the client holds the same
+        // `maxViolations` it is already showing the student — so if that flag
+        // ever fails to arrive, the count must still not be allowed to sail
+        // past the limit the student was promised. Reaching the limit ends the
+        // attempt either way.
+        final max = widget.detail.assessment.maxViolations;
+        final reachedLimit = event.shouldAutoSubmit ||
+            (max != null && event.violationCount >= max);
+
+        if (reachedLimit && !_thresholdFired) {
+          _thresholdFired = true;
+          // One message, not two: `_warnViolation` would also fire here and
+          // the student would get "no warnings left" stacked on top of the
+          // submission notice.
+          unawaited(_submitForViolations(eventType));
+          return;
+        }
+        _warnViolation(eventType, event.violationCount);
+      });
+    });
+  }
+
+  /// Tells the student what was seen and how much rope is left, matching the
+  /// web's warning toast.
+  void _warnViolation(String eventType, int count) {
+    final max = widget.detail.assessment.maxViolations;
+    final label = ProctorEventType.label(eventType);
+    if (max == null) {
+      AppToast.warning(context, '$label. This has been recorded.');
+      return;
+    }
+    final left = (max - count).clamp(0, max);
+    AppToast.warning(
+      context,
+      left == 0
+          ? '$label. No warnings left — submitting automatically.'
+          : '$label. $left warning${left == 1 ? '' : 's'} left before '
+              'auto-submit.',
+    );
   }
 
   @override
@@ -65,14 +152,19 @@ class _AttemptRunnerState extends State<AttemptRunner> with WidgetsBindingObserv
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (!widget.detail.assessment.isProctored) return;
+    // Only when the teacher asked for it. Counting a background switch against
+    // a student whose assessment never enabled tab-switch detection is the
+    // difference between proctoring and punishing.
+    if (_config?.tabSwitch != true) return;
     // Backgrounding the app is only suspicious when the student did not ask for
     // it. Opening the file picker to hand in their work is the opposite.
     if (_isTrustedInteraction) return;
     // `paused` / `inactive` is the mobile stand-in for the web's tab-switch and
-    // fullscreen-exit signals.
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
-      setState(() => _violations++);
+    // fullscreen-exit signals. Only `paused` counts: `inactive` also fires for
+    // a notification banner or the app switcher being peeked, which the student
+    // did not choose, and it always precedes a real `paused` anyway.
+    if (state == AppLifecycleState.paused) {
+      _reportViolation(ProctorEventType.tabSwitch);
     }
   }
 
@@ -154,7 +246,15 @@ class _AttemptRunnerState extends State<AttemptRunner> with WidgetsBindingObserv
           total: questions.length,
           answered: cubit.answeredCount,
           remaining: _remaining,
-          violations: widget.detail.assessment.isProctored ? _violations : null,
+          // Shown for any proctored attempt, not just one with a mobile
+          // signal enabled: a resumed attempt can carry violations recorded on
+          // the web, and hiding them would understate where the student stands.
+          // Shown for any proctored attempt, not just one with a mobile
+          // signal enabled: a resumed attempt can carry violations recorded on
+          // the web, and hiding them would understate where the student stands.
+          violations:
+              widget.detail.assessment.isProctored ? _violations : null,
+          maxViolations: widget.detail.assessment.maxViolations,
           onPalette: () => _openPalette(questions, cubit),
         ),
         Expanded(
@@ -166,6 +266,8 @@ class _AttemptRunnerState extends State<AttemptRunner> with WidgetsBindingObserv
                 question: question,
                 answer: answer,
                 onChanged: (updated) => cubit.setAnswer(question, updated),
+                onClipboardViolation:
+                    _config?.copyPaste == true ? _reportViolation : null,
               ),
             ],
           ),
@@ -227,6 +329,47 @@ class _AttemptRunnerState extends State<AttemptRunner> with WidgetsBindingObserv
     await _submit();
   }
 
+  /// Ends the attempt because the violation limit was reached, then leaves it.
+  ///
+  /// The submit is allowed to fail without changing the outcome: the server
+  /// finalizes the attempt itself the moment the threshold trips, so a failure
+  /// here usually means it is *already* submitted. Either way the student must
+  /// not be left sitting on a live-looking quiz they can no longer submit, so
+  /// the screen closes regardless.
+  Future<void> _submitForViolations(String eventType) async {
+    final cubit = context.read<AssessmentDetailCubit>();
+    // Captured before the await. Submitting reloads the attempt, which swaps
+    // this runner for the review screen — so by the time the submit returns,
+    // this widget may be gone and its context dead. The router outlives it.
+    final router = GoRouter.of(context);
+    final fallback = widget.kind.toLowerCase() == 'quiz'
+        ? StudentRoutes.quiz
+        : StudentRoutes.assignments;
+
+    _clock?.cancel();
+
+    // Said first, while this widget is certainly still alive to say it.
+    AppToast.warning(
+      context,
+      '${ProctorEventType.label(eventType)}. Violation limit reached — your '
+      '${widget.kind.toLowerCase()} was submitted automatically.',
+    );
+
+    // The outcome does not depend on this succeeding: the server finalizes the
+    // attempt itself the moment the threshold trips, so a failure here almost
+    // always means it is already submitted. Either way the student must not be
+    // left on a live-looking quiz they can no longer submit.
+    await cubit.submit(autoSubmitted: true);
+
+    if (router.canPop()) {
+      router.pop();
+    } else {
+      // No stack — a deep link straight into the attempt. Land on the list the
+      // quiz came from rather than a dead end.
+      router.go(fallback);
+    }
+  }
+
   Future<void> _submit({bool autoSubmitted = false}) async {
     final cubit = context.read<AssessmentDetailCubit>();
     final failure = await cubit.submit(autoSubmitted: autoSubmitted);
@@ -250,6 +393,7 @@ class _RunnerHeader extends StatelessWidget {
     required this.answered,
     required this.remaining,
     required this.violations,
+    required this.maxViolations,
     required this.onPalette,
   });
 
@@ -258,6 +402,9 @@ class _RunnerHeader extends StatelessWidget {
   final int answered;
   final Duration? remaining;
   final int? violations;
+
+  /// The limit the count is racing towards, when the assessment sets one.
+  final int? maxViolations;
   final VoidCallback onPalette;
 
   @override
@@ -332,19 +479,39 @@ class _RunnerHeader extends StatelessWidget {
               const SizedBox(width: 8),
             ],
           ),
-          if (violations != null && violations! > 0) ...[
+          // Shown from the first question, at zero. The allowance is part of
+          // the rules the student is playing by, so it has to be visible
+          // *before* it is spent — appearing only on the first violation made
+          // it read as a punishment notice rather than as a budget.
+          //
+          // Amber is reserved for a student who has actually spent something;
+          // an untouched allowance is information, not a warning.
+          if (violations != null) ...[
             const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(Icons.shield_outlined, size: 14, color: tokens.warning.foreground),
-                const SizedBox(width: 6),
-                Text(
-                  '$violations violation${violations == 1 ? '' : 's'} recorded',
-                  style: theme.textTheme.labelSmall
-                      ?.copyWith(color: tokens.warning.foreground),
-                ),
-              ],
-            ),
+            Builder(builder: (context) {
+              final tone = violations! > 0
+                  ? tokens.warning.foreground
+                  : context.scheme.mutedForeground;
+
+              return Row(
+                children: [
+                  Icon(Icons.shield_outlined, size: 14, color: tone),
+                  const SizedBox(width: 6),
+                  Text(
+                    // Clamped: the server's tally can legitimately run past the
+                    // limit — a burst of events queued while the app was in the
+                    // background all land — but "4 of 3" is nonsense to read,
+                    // and the attempt is over at 3 either way.
+                    maxViolations == null
+                        ? '$violations violation'
+                            '${violations == 1 ? '' : 's'} recorded'
+                        : '${violations!.clamp(0, maxViolations!)} of '
+                            '$maxViolations violations used',
+                    style: theme.textTheme.labelSmall?.copyWith(color: tone),
+                  ),
+                ],
+              );
+            }),
           ],
         ],
       ),
@@ -469,12 +636,16 @@ class _QuestionCard extends StatelessWidget {
     required this.question,
     required this.answer,
     required this.onChanged,
+    this.onClipboardViolation,
   });
 
   final int index;
   final AssessmentQuestion question;
   final QuestionAnswer? answer;
   final ValueChanged<QuestionAnswer> onChanged;
+
+  /// Non-null only while `copyPaste` proctoring is on.
+  final ValueChanged<String>? onClipboardViolation;
 
   QuestionAnswer get _base =>
       answer ??
@@ -518,6 +689,7 @@ class _QuestionCard extends StatelessWidget {
               // An assessment question carries no language of its own; the only
               // hint is whatever the student's saved answer was written in.
               language: _base.language,
+              onClipboardViolation: onClipboardViolation,
               key: ValueKey(question.assessmentQuestionId),
               initial: question.type == 'coding' ? _base.code : _base.answerText,
               isCode: question.type == 'coding',
@@ -638,11 +810,18 @@ class _TextInput extends StatefulWidget {
     required this.isCode,
     required this.onChanged,
     this.language,
+    this.onClipboardViolation,
   });
 
   final String? initial;
   final bool isCode;
   final ValueChanged<String> onChanged;
+
+  /// Set only while `copyPaste` proctoring is on. Called with the event type
+  /// when the student reaches for copy, cut or paste — the action is blocked
+  /// as well as reported, matching the web, whose switch is literally labelled
+  /// "Block copy & paste".
+  final ValueChanged<String>? onClipboardViolation;
 
   /// Drives the highlighting when this is a coding answer. An assessment
   /// question carries no language of its own, so this is usually null and the
@@ -689,12 +868,50 @@ class _TextInputState extends State<_TextInput> {
       );
     }
 
+    final report = widget.onClipboardViolation;
+
     return TextField(
       controller: _text,
       onChanged: widget.onChanged,
       maxLines: 8,
       minLines: 5,
       style: Theme.of(context).textTheme.bodyMedium,
+      contextMenuBuilder: report == null
+          ? null
+          : (context, editableTextState) {
+              // The clipboard entries stay in the menu rather than being hidden:
+              // a student who reaches for paste has to be told it was seen and
+              // refused, and a menu that silently lacks the button reads as a
+              // bug instead of a rule.
+              final items = [
+                for (final item in editableTextState.contextMenuButtonItems)
+                  switch (item.type) {
+                    ContextMenuButtonType.copy => item.copyWith(
+                        onPressed: () {
+                          editableTextState.hideToolbar();
+                          report(ProctorEventType.copy);
+                        },
+                      ),
+                    ContextMenuButtonType.cut => item.copyWith(
+                        onPressed: () {
+                          editableTextState.hideToolbar();
+                          report(ProctorEventType.copy);
+                        },
+                      ),
+                    ContextMenuButtonType.paste => item.copyWith(
+                        onPressed: () {
+                          editableTextState.hideToolbar();
+                          report(ProctorEventType.paste);
+                        },
+                      ),
+                    _ => item,
+                  },
+              ];
+              return AdaptiveTextSelectionToolbar.buttonItems(
+                anchors: editableTextState.contextMenuAnchors,
+                buttonItems: items,
+              );
+            },
       decoration: const InputDecoration(
         hintText: 'Type your answer…',
         alignLabelWithHint: true,

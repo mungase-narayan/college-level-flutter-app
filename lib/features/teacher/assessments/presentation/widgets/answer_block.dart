@@ -478,9 +478,14 @@ class _Grading extends StatelessWidget {
               ),
               const Spacer(),
               SizedBox(
-                width: 58,
+                width: 52,
                 child: AppInput(
                   controller: score,
+                  // Matches the 30pt height of the Wrong/Correct buttons
+                  // beside it. At the default height it towered over them and
+                  // read as the row's primary control; plain `dense` (38) was
+                  // still 8pt taller than they are.
+                  compact: true,
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   onChanged: onScore,

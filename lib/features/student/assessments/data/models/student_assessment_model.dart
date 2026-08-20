@@ -20,6 +20,8 @@ class StudentAssessmentModel extends StudentAssessment {
     super.isAllowResubmission,
     super.maxAttempt,
     super.isProctored,
+    super.maxViolations,
+    super.proctoringConfig,
     super.durationMinutes,
     super.submission,
     super.course,
@@ -46,6 +48,8 @@ class StudentAssessmentModel extends StudentAssessment {
         isAllowResubmission: json['isAllowResubmission'] as bool? ?? false,
         maxAttempt: _int(json['maxAttempt'], 1),
         isProctored: json['isProctored'] as bool? ?? false,
+        maxViolations: _intOrNull(json['maxViolations']),
+        proctoringConfig: proctoringConfigFromJson(json['proctoringConfig']),
         durationMinutes: _intOrNull(json['durationMinutes']),
         submission: json['submission'] is Map<String, dynamic>
             ? AssessmentSubmissionModel.fromJson(
@@ -107,4 +111,20 @@ class AssessmentSubmissionModel extends AssessmentSubmission {
         submittedAt: json['submittedAt'] as String?,
         evaluatedAt: json['evaluatedAt'] as String?,
       );
+}
+
+/// The teacher's signal switches. Absent or malformed means "watch nothing"
+/// rather than "watch everything" — a config the server never sent must not
+/// start scoring the student against rules nobody turned on.
+ProctoringConfig? proctoringConfigFromJson(Object? raw) {
+  if (raw is! Map<String, dynamic>) return null;
+  bool flag(String key) => raw[key] as bool? ?? false;
+  return ProctoringConfig(
+    fullscreen: flag('fullscreen'),
+    tabSwitch: flag('tabSwitch'),
+    copyPaste: flag('copyPaste'),
+    rightClick: flag('rightClick'),
+    resize: flag('resize'),
+    print: flag('print'),
+  );
 }

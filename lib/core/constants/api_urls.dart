@@ -13,7 +13,7 @@ class ApiUrls {
   ///
   /// No trailing slash: every path constant below starts with `/`, and Dio
   /// concatenates the two.
-  static const _defaultBaseUrl = 'https://collegelevel.blsheet.com/api/v1';
+  static const _defaultBaseUrl = 'https://college-level-backend.vercel.app/api/v1';
 
   /// Point at a different backend without editing code:
   /// `flutter run --dart-define=API_BASE_URL=http://localhost:3005/api/v1`

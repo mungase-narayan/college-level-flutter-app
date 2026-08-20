@@ -20,6 +20,7 @@ class AdaptiveAppBar extends StatelessWidget implements PreferredSizeWidget {
     super.key,
     required this.title,
     this.actions = const [],
+    this.titleTrailing,
     this.bottom,
     this.automaticallyImplyLeading = true,
     this.leading,
@@ -27,6 +28,11 @@ class AdaptiveAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   final String title;
   final List<Widget> actions;
+
+  /// Sits immediately after the title, inside the title's own slot rather than
+  /// out with the actions — for a status badge that belongs to the thing being
+  /// named, not to the controls acting on it.
+  final Widget? titleTrailing;
 
   /// A [TabBar], typically. Contributes its height to [preferredSize] on both
   /// platforms, matching [AppBar.bottom].
@@ -57,6 +63,7 @@ class AdaptiveAppBar extends StatelessWidget implements PreferredSizeWidget {
     if (context.useGlass) {
       return LiquidGlassAppBar(
         title: title,
+        titleTrailing: titleTrailing,
         actions: actions,
         bottom: bottom,
         leading: leading,
@@ -69,7 +76,16 @@ class AdaptiveAppBar extends StatelessWidget implements PreferredSizeWidget {
     }
 
     return AppBar(
-      title: Text(title),
+      title: titleTrailing == null
+          ? Text(title)
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(child: Text(title, overflow: TextOverflow.ellipsis)),
+                const SizedBox(width: 8),
+                titleTrailing!,
+              ],
+            ),
       actions: actions,
       bottom: bottom,
       leading: leading,

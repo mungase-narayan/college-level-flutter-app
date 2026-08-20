@@ -6,7 +6,7 @@ import '../../design/widgets/liquid_glass_button.dart';
 
 enum AppButtonVariant { primary, outline, ghost, destructive }
 
-enum AppButtonSize { sm, md, lg }
+enum AppButtonSize { xs, sm, md, lg }
 
 /// The shared button, covering the shadcn variants the React app uses
 /// (`default`, `outline`, `ghost`, `destructive`) plus a built-in busy state so
@@ -34,7 +34,7 @@ class AppButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (context.useGlass) {
-      // Heights are identical across the two enums (38 / 48 / 54), so swapping
+      // Heights are identical across the two enums (30 / 38 / 48 / 54), so swapping
       // in the glass branch never reflows a screen. The Material branch below
       // needs `shrinkWrap` to hold to that — its default tap-target padding
       // silently floors every button at 48.
@@ -51,6 +51,7 @@ class AppButton extends StatelessWidget {
           AppButtonVariant.destructive => GlassButtonVariant.destructive,
         },
         size: switch (size) {
+          AppButtonSize.xs => GlassButtonSize.xs,
           AppButtonSize.sm => GlassButtonSize.sm,
           AppButtonSize.md => GlassButtonSize.md,
           AppButtonSize.lg => GlassButtonSize.lg,
@@ -60,12 +61,20 @@ class AppButton extends StatelessWidget {
 
     final scheme = context.scheme;
     final height = switch (size) {
+      AppButtonSize.xs => AppTheme.controlHeightXs,
       AppButtonSize.sm => AppTheme.controlHeightSm,
       AppButtonSize.md => AppTheme.controlHeightMd,
       AppButtonSize.lg => AppTheme.controlHeightLg,
     };
     // A busy button must not fire again mid-flight.
     final enabled = onPressed != null && !isLoading;
+    // `xs` is the badge size: the Material default padding and label would keep
+    // it visually large even once its height is 30, so both come down with it.
+    final compact = size == AppButtonSize.xs;
+    final compactPadding =
+        compact ? const EdgeInsets.symmetric(horizontal: 12) : null;
+    final compactTextStyle =
+        compact ? Theme.of(context).textTheme.labelMedium : null;
 
     final child = Row(
       mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
@@ -78,7 +87,11 @@ class AppButton extends StatelessWidget {
             child: CircularProgressIndicator(strokeWidth: 2),
           )
         else if (icon != null)
-          Icon(icon, size: size == AppButtonSize.sm ? 16 : 18),
+          Icon(icon, size: switch (size) {
+            AppButtonSize.xs => 14.0,
+            AppButtonSize.sm => 16.0,
+            _ => 18.0,
+          }),
         if (isLoading || icon != null) const SizedBox(width: 8),
         Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
       ],
@@ -90,6 +103,8 @@ class AppButton extends StatelessWidget {
           style: FilledButton.styleFrom(
             minimumSize: Size(0, height),
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            padding: compactPadding,
+            textStyle: compactTextStyle,
           ),
           child: child,
         ),
@@ -98,6 +113,8 @@ class AppButton extends StatelessWidget {
           style: FilledButton.styleFrom(
             minimumSize: Size(0, height),
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            padding: compactPadding,
+            textStyle: compactTextStyle,
             backgroundColor: scheme.destructive,
             foregroundColor: Colors.white,
           ),
@@ -108,6 +125,8 @@ class AppButton extends StatelessWidget {
           style: OutlinedButton.styleFrom(
             minimumSize: Size(0, height),
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            padding: compactPadding,
+            textStyle: compactTextStyle,
           ),
           child: child,
         ),
@@ -117,7 +136,8 @@ class AppButton extends StatelessWidget {
             minimumSize: Size(0, height),
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             foregroundColor: scheme.foreground,
-            padding: const EdgeInsets.symmetric(horizontal: 14),
+            textStyle: compactTextStyle,
+            padding: compactPadding ?? const EdgeInsets.symmetric(horizontal: 14),
           ),
           child: child,
         ),

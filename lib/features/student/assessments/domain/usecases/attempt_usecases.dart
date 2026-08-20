@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 import '../../../../../core/error/failures.dart';
 import '../../../../../core/usecases/usecase.dart';
 import '../entities/assessment_detail.dart';
+import '../entities/student_assessment.dart';
 import '../repositories/assessment_repository.dart';
 
 class GetAssessmentDetailUseCase implements UseCase<AssessmentDetail, IdParams> {
@@ -54,6 +55,45 @@ class SubmitAttemptUseCase implements UseCase<Unit, AttemptPayload> {
         fileIds: params.fileIds,
         autoSubmitted: params.autoSubmitted,
       );
+}
+
+/// Records one proctoring violation, answering with the server's tally.
+class RecordProctorEventUseCase
+    implements UseCase<ProctorEventResult, ProctorEventParams> {
+  const RecordProctorEventUseCase(this._repository);
+
+  final AssessmentRepository _repository;
+
+  @override
+  Future<Either<Failure, ProctorEventResult>> call(
+    ProctorEventParams params,
+  ) =>
+      _repository.recordProctorEvent(
+        assessmentId: params.assessmentId,
+        eventType: params.eventType,
+        occurredAt: params.occurredAt,
+        meta: params.meta,
+      );
+}
+
+class ProctorEventParams extends Equatable {
+  const ProctorEventParams({
+    required this.assessmentId,
+    required this.eventType,
+    required this.occurredAt,
+    this.meta,
+  });
+
+  final String assessmentId;
+  final String eventType;
+
+  /// When the student actually did it, not when the report was sent — a report
+  /// queued behind another must still carry its own moment.
+  final DateTime occurredAt;
+  final Map<String, dynamic>? meta;
+
+  @override
+  List<Object?> get props => [assessmentId, eventType, occurredAt, meta];
 }
 
 /// The body shared by the save and submit endpoints.

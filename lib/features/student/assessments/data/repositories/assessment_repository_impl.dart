@@ -78,6 +78,22 @@ class AssessmentRepositoryImpl
       });
 
   @override
+  Future<Either<Failure, ProctorEventResult>> recordProctorEvent({
+    required String assessmentId,
+    required String eventType,
+    required DateTime occurredAt,
+    Map<String, dynamic>? meta,
+  }) =>
+      guard(() => _service.recordProctorEvent(
+            assessmentId: assessmentId,
+            eventType: eventType,
+            // The server timestamps by receipt otherwise, which would bunch a
+            // queued burst of events onto one instant.
+            occurredAt: occurredAt.toUtc().toIso8601String(),
+            meta: meta,
+          ));
+
+  @override
   Future<Either<Failure, Unit>> submit({
     required String assessmentId,
     List<Map<String, dynamic>>? answers,

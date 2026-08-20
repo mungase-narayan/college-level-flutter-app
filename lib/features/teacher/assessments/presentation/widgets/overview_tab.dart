@@ -24,10 +24,33 @@ class OverviewTab extends StatefulWidget {
 }
 
 class _OverviewTabState extends State<OverviewTab> {
+  final _sortDraft = ValueNotifier<String>(OverviewCubit.sortScoreDesc);
+
+  @override
+  void dispose() {
+    _sortDraft.dispose();
+    super.dispose();
+  }
+
   @override
   void initState() {
     super.initState();
     context.read<OverviewCubit>().load();
+  }
+
+  Future<void> _openFilters(OverviewCubit cubit) async {
+    // Opens on what is actually applied, so dismissing without applying leaves
+    // the list exactly as it was.
+    _sortDraft.value = cubit.sort;
+
+    final applied = await showAppSheet<String>(
+      context,
+      title: 'Filters',
+      builder: (context) => _FilterSheet(draft: _sortDraft),
+    );
+    if (applied == null || !mounted) return;
+
+    setState(() => cubit.setSort(applied));
   }
 
   @override
@@ -46,24 +69,24 @@ class _OverviewTabState extends State<OverviewTab> {
             children: [
               _Summary(overview: overview),
               const SizedBox(height: 12),
-              AppSearchField(
-                dense: true,
-                hint: 'Search by name or roll number',
-                onChanged: cubit.setSearch,
-              ),
-              const SizedBox(height: 10),
-              AppSelect<String>(
-                dense: true,
-                value: cubit.sort,
-                items: [
-                  for (final option in OverviewCubit.sortOptions)
-                    AppSelectItem(
-                      value: option,
-                      label: OverviewCubit.sortLabel(option),
+              Row(
+                children: [
+                  Expanded(
+                    child: AppSearchField(
+                      dense: true,
+                      hint: 'Search by name or roll number',
+                      onChanged: cubit.setSearch,
                     ),
+                  ),
+                  const SizedBox(width: 8),
+                  _FilterButton(
+                    // Sorting is the only filter here, so the badge counts it
+                    // only once it differs from the default ordering.
+                    activeCount:
+                        cubit.sort == OverviewCubit.sortScoreDesc ? 0 : 1,
+                    onPressed: () => _openFilters(cubit),
+                  ),
                 ],
-                onChanged: (value) =>
-                    setState(() => cubit.setSort(value ?? cubit.sort)),
               ),
               const SizedBox(height: 14),
               if (state.isInitialLoading)
@@ -102,6 +125,102 @@ class _OverviewTabState extends State<OverviewTab> {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+/// The filter entry point, matching the icon-plus-count control the course and
+/// assignment lists use.
+class _FilterButton extends StatelessWidget {
+  const _FilterButton({required this.activeCount, required this.onPressed});
+
+  final int activeCount;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = context.scheme;
+    final theme = Theme.of(context);
+    final isActive = activeCount > 0;
+
+    return IconButton(
+      tooltip: isActive ? 'Filters ($activeCount applied)' : 'Filters',
+      onPressed: onPressed,
+      icon: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Icon(
+            Icons.tune_rounded,
+            color: isActive ? scheme.primary : null,
+          ),
+          if (isActive)
+            Positioned(
+              top: -5,
+              right: -6,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                constraints: const BoxConstraints(minWidth: 15),
+                decoration: BoxDecoration(
+                  color: scheme.primary,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '$activeCount',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: scheme.primaryForeground,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The sort orderings, as the same option-group sheet every other list filters
+/// through.
+class _FilterSheet extends StatelessWidget {
+  const _FilterSheet({required this.draft});
+
+  final ValueNotifier<String> draft;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<String>(
+      valueListenable: draft,
+      builder: (context, value, _) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppOptionGroup<String>(
+            header: 'Sort by',
+            selected: value,
+            onSelected: (sort) => draft.value = sort,
+            options: [
+              for (final option in OverviewCubit.sortOptions)
+                AppOptionItem(
+                  value: option,
+                  label: OverviewCubit.sortLabel(option),
+                  icon: option.startsWith('score')
+                      ? Icons.leaderboard_outlined
+                      : Icons.sort_by_alpha_rounded,
+                ),
+            ],
+          ),
+          AppFilterActions(
+            // Disabled at the default ordering, so Reset never implies there is
+            // something to clear when there is not.
+            onReset: value == OverviewCubit.sortScoreDesc
+                ? null
+                : () => draft.value = OverviewCubit.sortScoreDesc,
+            onApply: () => Navigator.of(context).pop(value),
+          ),
+        ],
       ),
     );
   }

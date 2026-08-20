@@ -32,6 +32,7 @@ class LiquidGlassAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.title,
     this.subtitle,
     this.actions = const [],
+    this.titleTrailing,
     this.leading,
     this.largeTitle = false,
     this.scrollOffset,
@@ -47,6 +48,11 @@ class LiquidGlassAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String? subtitle;
 
   final List<Widget> actions;
+
+  /// Rendered right after the compact title, sharing its slot. Suppressed while
+  /// a large title is expanded, where the toolbar row holds no title to trail.
+  final Widget? titleTrailing;
+
   final Widget? leading;
 
   /// Renders the iOS 34pt large title below the toolbar row, collapsing into the
@@ -81,6 +87,7 @@ class LiquidGlassAppBar extends StatelessWidget implements PreferredSizeWidget {
         title: title,
         subtitle: subtitle,
         actions: actions,
+        titleTrailing: titleTrailing,
         leading: leading,
         largeTitle: largeTitle,
         showBackButton: showBackButton,
@@ -96,6 +103,7 @@ class LiquidGlassAppBar extends StatelessWidget implements PreferredSizeWidget {
         title: title,
         subtitle: subtitle,
         actions: actions,
+        titleTrailing: titleTrailing,
         leading: leading,
         largeTitle: largeTitle,
         showBackButton: showBackButton,
@@ -112,6 +120,7 @@ class _AppBarSurface extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.actions,
+    required this.titleTrailing,
     required this.leading,
     required this.largeTitle,
     required this.showBackButton,
@@ -123,6 +132,7 @@ class _AppBarSurface extends StatelessWidget {
   final String title;
   final String? subtitle;
   final List<Widget> actions;
+  final Widget? titleTrailing;
   final Widget? leading;
   final bool largeTitle;
   final bool showBackButton;
@@ -207,11 +217,22 @@ class _AppBarSurface extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  title,
-                                  style: theme.textTheme.titleMedium,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        title,
+                                        style: theme.textTheme.titleMedium,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    if (titleTrailing != null) ...[
+                                      const SizedBox(width: GlassSpacing.sm),
+                                      titleTrailing!,
+                                    ],
+                                  ],
                                 ),
                                 if (subtitle != null)
                                   Text(
