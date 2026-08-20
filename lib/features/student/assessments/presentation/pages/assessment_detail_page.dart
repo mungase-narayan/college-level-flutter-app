@@ -43,6 +43,11 @@ class _AssessmentDetailPageState extends State<AssessmentDetailPage> {
     return Scaffold(
       appBar: AdaptiveAppBar(title: widget.kind),
       body: SafeArea(
+        // The attempt runner's footer runs to the screen edge and pads itself
+        // past the home indicator, as every other bottom bar in the app does.
+        // Holding the inset here stranded a band of background under it.
+        // The scrolling views below add the same clearance themselves.
+        bottom: false,
         child: RemoteView<AssessmentDetailCubit, AssessmentDetail>(
           onRetry: cubit.load,
           loading: const Padding(
@@ -127,6 +132,12 @@ class _AttemptIntroState extends State<AttemptIntro> {
 
     return RefreshableScroll(
       onRefresh: widget.onRefresh,
+      padding: EdgeInsets.fromLTRB(
+        16,
+        12,
+        16,
+        28 + MediaQuery.paddingOf(context).bottom,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -200,10 +211,7 @@ class _AttemptIntroState extends State<AttemptIntro> {
               tone: tokens.warning,
               icon: Icons.shield_outlined,
               title: 'This is a proctored ${widget.kind.toLowerCase()}',
-              // The mobile equivalent of the web's fullscreen rule: leaving the
-              // app is what gets recorded here.
-              body: 'Leaving the app, switching away, or copying content is '
-                  'recorded as a violation.',
+              body: _proctoringRules(assessment),
             ),
           ],
 
@@ -599,6 +607,38 @@ class _ScheduleRow extends StatelessWidget {
 }
 
 /// A tinted callout — the proctoring and window banners.
+/// Spells out only the rules that are actually enforced.
+///
+/// The notice used to promise all three signals whatever the assessment
+/// switched on, which meant a student could be warned about a rule that would
+/// never fire — or, worse, not warned about the one that would.
+String _proctoringRules(StudentAssessment assessment) {
+  final config = assessment.proctoringConfig;
+  final rules = [
+    if (config?.tabSwitch ?? false) 'leaving the app or switching away',
+    if (config?.copyPaste ?? false) 'copying or pasting',
+  ];
+
+  final limit = assessment.maxViolations;
+  final consequence = limit == null
+      ? ' is recorded as a violation.'
+      : ' is recorded as a violation. After $limit, the '
+          '${assessment.type == 'submission' ? 'submission' : 'attempt'} is '
+          'submitted automatically.';
+
+  return switch (rules.length) {
+    0 =>
+      // Proctored, but nothing this device can watch — say so rather than
+      // inventing a rule the student cannot break here.
+      'Your activity is monitored during this attempt.',
+    1 => '${_capitalise(rules.single)}$consequence',
+    _ => '${_capitalise(rules.first)}, or ${rules.last},$consequence',
+  };
+}
+
+String _capitalise(String value) =>
+    value.isEmpty ? value : value[0].toUpperCase() + value.substring(1);
+
 class _Notice extends StatelessWidget {
   const _Notice({
     required this.tone,

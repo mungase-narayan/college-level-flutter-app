@@ -37,6 +37,14 @@ abstract class AssessmentRepository {
     List<String>? fileIds,
   });
 
+  /// Records one proctoring violation and returns the server's running tally.
+  Future<Either<Failure, ProctorEventResult>> recordProctorEvent({
+    required String assessmentId,
+    required String eventType,
+    required DateTime occurredAt,
+    Map<String, dynamic>? meta,
+  });
+
   Future<Either<Failure, Unit>> submit({
     required String assessmentId,
     List<Map<String, dynamic>>? answers,

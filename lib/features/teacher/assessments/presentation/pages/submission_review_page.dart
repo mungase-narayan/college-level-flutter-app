@@ -67,7 +67,7 @@ class _ReviewScaffold extends StatelessWidget {
                   padding: const EdgeInsets.only(right: 8),
                   child: AppButton(
                     label: 'Save',
-                    size: AppButtonSize.sm,
+                    size: AppButtonSize.xs,
                     isLoading: state.isSaving,
                     onPressed: () => _save(context, cubit),
                   ),
@@ -76,6 +76,11 @@ class _ReviewScaffold extends StatelessWidget {
           ),
           body: SafeArea(
             top: false,
+            // The question view's pager bar runs to the screen edge and pads
+            // itself past the home indicator, the way every other bottom bar in
+            // the app does. Holding the inset here instead left a 34pt band of
+            // background stranded below the bar.
+            bottom: false,
             child: Builder(
               builder: (context) {
                 final failure = state.failure;
@@ -156,7 +161,12 @@ class _SubmissionBodyState extends State<_SubmissionBody> {
     final totalMarks = cubit.assessment.assessment.totalMarks;
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        14,
+        16,
+        28 + MediaQuery.paddingOf(context).bottom,
+      ),
       children: [
         _Details(cubit: cubit, state: state),
         const SizedBox(height: 12),
@@ -245,7 +255,12 @@ class _QuestionBody extends StatelessWidget {
 
     if (answers.isEmpty) {
       return ListView(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          14,
+          16,
+          28 + MediaQuery.paddingOf(context).bottom,
+        ),
         children: [_Details(cubit: cubit, state: state)],
       );
     }
@@ -281,28 +296,38 @@ class _QuestionBody extends StatelessWidget {
           ),
         ),
         Container(
-          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+          padding: EdgeInsets.fromLTRB(
+            16,
+            10,
+            16,
+            10 + MediaQuery.paddingOf(context).bottom,
+          ),
           decoration: BoxDecoration(
             color: scheme.card,
             border: Border(top: BorderSide(color: scheme.border)),
           ),
           child: Row(
             children: [
-              IconButton(
+              _PagerButton(
+                icon: Icons.chevron_left_rounded,
+                semanticLabel: 'Previous question',
                 onPressed:
                     index > 0 ? () => cubit.setCurrent(index - 1) : null,
-                icon: const Icon(Icons.chevron_left_rounded),
               ),
-              IconButton(
+              const SizedBox(width: 12),
+              Text(
+                '${index + 1}/${answers.length}',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(width: 12),
+              _PagerButton(
+                icon: Icons.chevron_right_rounded,
+                semanticLabel: 'Next question',
                 onPressed: index < answers.length - 1
                     ? () => cubit.setCurrent(index + 1)
                     : null,
-                icon: const Icon(Icons.chevron_right_rounded),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                '${index + 1}/${answers.length}',
-                style: theme.textTheme.labelSmall,
               ),
               const Spacer(),
               if (!state.readOnly)
@@ -317,6 +342,54 @@ class _QuestionBody extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// A round chevron for the pager bar, sized and toned to match the question
+/// palette chips above it so the two read as one navigation system.
+class _PagerButton extends StatelessWidget {
+  const _PagerButton({
+    required this.icon,
+    required this.semanticLabel,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String semanticLabel;
+
+  /// Null at the ends of the list, which greys the button out rather than
+  /// hiding it — the row must not reflow as the teacher pages through.
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = context.scheme;
+    final enabled = onPressed != null;
+
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      label: semanticLabel,
+      child: InkWell(
+        onTap: onPressed,
+        customBorder: const CircleBorder(),
+        child: Container(
+          width: 34,
+          height: 34,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: scheme.muted,
+            border: Border.all(color: scheme.border),
+          ),
+          child: Icon(
+            icon,
+            size: 20,
+            color: enabled ? scheme.foreground : scheme.mutedForeground,
+          ),
+        ),
+      ),
     );
   }
 }

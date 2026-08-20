@@ -29,7 +29,12 @@ class AttemptReview extends StatelessWidget {
     final published = detail.resultsPublished;
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        16,
+        16,
+        28 + MediaQuery.paddingOf(context).bottom,
+      ),
       children: [
         // ── Summary ───────────────────────────────────────────────────────
         AppCard(

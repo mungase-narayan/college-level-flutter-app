@@ -89,6 +89,15 @@ class _AssessmentResultsPageState extends State<AssessmentResultsPage> {
       child: Scaffold(
         appBar: AdaptiveAppBar(
           title: detail?.assessment.title ?? 'Results',
+          // The badge states something about the assessment itself, so it
+          // belongs beside its name rather than in a band below the tabs.
+          titleTrailing: (detail?.assessment.resultsPublished ?? false)
+              ? const AppBadge(
+                  'Published',
+                  icon: Icons.check_circle_outline_rounded,
+                  dense: true,
+                )
+              : null,
           actions: [
             if (detail != null) ...[
               IconButton(
@@ -148,8 +157,6 @@ class _AssessmentResultsPageState extends State<AssessmentResultsPage> {
 
               return Column(
                 children: [
-                  if (detail.assessment.resultsPublished)
-                    const _PublishedBanner(),
                   Expanded(
                     child: TabBarView(
                       children: [
@@ -265,21 +272,3 @@ class _AssessmentResultsPageState extends State<AssessmentResultsPage> {
   }
 }
 
-class _PublishedBanner extends StatelessWidget {
-  const _PublishedBanner();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.fromLTRB(16, 10, 16, 0),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: AppBadge(
-          'Results published',
-          icon: Icons.check_circle_outline_rounded,
-          dense: true,
-        ),
-      ),
-    );
-  }
-}

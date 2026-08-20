@@ -12,9 +12,13 @@ import 'glass_surface.dart';
 /// Material equivalent and is used inside chrome and sheets.
 enum GlassButtonVariant { primary, outline, ghost, destructive, glass }
 
-/// Glass button sizes. Heights match `AppButtonSize` exactly (38 / 48 / 54) so
-/// swapping in the glass branch never reflows a screen.
+/// Glass button sizes. Heights match `AppButtonSize` exactly (30 / 38 / 48 / 54)
+/// so swapping in the glass branch never reflows a screen.
+///
+/// [xs] is the badge size: short enough to sit in an app bar beside a title
+/// without dominating it, which the taller sizes do.
 enum GlassButtonSize {
+  xs(30, 12, 13),
   sm(38, 16, 15),
   md(48, 20, 17),
   lg(54, 24, 17);
@@ -150,7 +154,10 @@ class LiquidGlassButton extends StatelessWidget {
 
     final content = child ??
         DefaultTextStyle.merge(
-          style: theme.textTheme.labelLarge?.copyWith(color: foreground),
+          style: (size == GlassButtonSize.xs
+                  ? theme.textTheme.labelMedium
+                  : theme.textTheme.labelLarge)
+              ?.copyWith(color: foreground),
           child: Row(
             mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -195,7 +202,11 @@ class LiquidGlassButton extends StatelessWidget {
         ? Padding(
             padding: EdgeInsets.symmetric(horizontal: size.horizontalPadding),
             child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: size.height),
+              // Tight, not a minimum: an app bar hands its actions a 52pt row,
+              // and a min-only constraint let the button stretch to fill it —
+              // which turned a capsule into a circle. Every size in this enum
+              // is a fixed height, so pinning it is what the sizes already mean.
+              constraints: BoxConstraints.tightFor(height: size.height),
               child: Center(widthFactor: expand ? null : 1.0, child: content),
             ),
           )
@@ -213,7 +224,7 @@ class LiquidGlassButton extends StatelessWidget {
             // there would read as a floating card rather than as a button.
             showShadow: variant == GlassButtonVariant.primary ||
                 variant == GlassButtonVariant.destructive,
-            constraints: BoxConstraints(minHeight: size.height),
+            constraints: BoxConstraints.tightFor(height: size.height),
             padding: EdgeInsets.symmetric(horizontal: size.horizontalPadding),
             child: Center(
               // `widthFactor: 1` keeps a non-expanding button hugging its

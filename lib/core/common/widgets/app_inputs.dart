@@ -21,22 +21,22 @@ import 'app_dialogs.dart';
 InputDecoration _denseDecoration({
   required bool dense,
   required InputDecoration base,
+  bool compact = false,
 }) {
-  if (!dense) return base;
+  if (!dense && !compact) return base;
 
-  const iconBox = BoxConstraints(
-    minWidth: AppTheme.controlHeightSm,
-    minHeight: AppTheme.controlHeightSm,
-  );
+  final box = compact ? AppTheme.controlHeightXs : AppTheme.controlHeightSm;
+  final iconBox = BoxConstraints(minWidth: box, minHeight: box);
   return base.copyWith(
     isDense: true,
     // An exact box rather than tuned padding: a dropdown's arrow and a text
     // field's content have different natural heights, so padding alone leaves
     // them a couple of pixels apart.
-    constraints: const BoxConstraints.tightFor(
-      height: AppTheme.controlHeightSm,
+    constraints: BoxConstraints.tightFor(height: box),
+    contentPadding: EdgeInsets.symmetric(
+      horizontal: compact ? 10 : 14,
+      vertical: compact ? 4 : 8,
     ),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
     prefixIconConstraints: iconBox,
     suffixIconConstraints: iconBox,
   );
@@ -64,12 +64,19 @@ class AppInput extends StatelessWidget {
     this.focusNode,
     this.inputFormatters,
     this.dense = false,
+    this.compact = false,
   });
 
   /// Shrinks the field to [AppTheme.controlHeightSm] so it lines up with an
   /// [AppButtonSize.sm] button in a filter bar. Ignored once the field is
   /// multi-line, which has to grow with its content.
   final bool dense;
+
+  /// One step tighter than [dense] — [AppTheme.controlHeightXs], matching an
+  /// [AppButtonSize.xs] badge. For a field that sits inline beside small
+  /// controls and must not read as the row's primary element, such as the
+  /// per-question score box in grading. Also ignored when multi-line.
+  final bool compact;
 
   final TextEditingController? controller;
   final String? label;
@@ -116,6 +123,7 @@ class AppInput extends StatelessWidget {
         focusNode: focusNode,
         inputFormatters: inputFormatters,
         dense: dense,
+        compact: compact,
       );
     }
 
@@ -145,6 +153,7 @@ class AppInput extends StatelessWidget {
           style: theme.textTheme.bodyMedium,
           decoration: _denseDecoration(
             dense: dense && maxLines == 1 && minLines == null,
+            compact: compact && maxLines == 1 && minLines == null,
             base: InputDecoration(
               hintText: hint,
               errorText: errorText,

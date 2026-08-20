@@ -193,7 +193,8 @@ void _initAssessments() {
     ..registerLazySingleton(() => GetAssessmentDetailUseCase(sl()))
     ..registerLazySingleton(() => StartAttemptUseCase(sl()))
     ..registerLazySingleton(() => SaveAttemptUseCase(sl()))
-    ..registerLazySingleton(() => SubmitAttemptUseCase(sl()));
+    ..registerLazySingleton(() => SubmitAttemptUseCase(sl()))
+    ..registerLazySingleton(() => RecordProctorEventUseCase(sl()));
 }
 
 void _initAttendance() {
