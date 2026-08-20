@@ -7,10 +7,10 @@ import 'package:college_level/core/config/theme/app_colors.dart';
 import 'package:college_level/core/constants/api_urls.dart';
 import 'package:college_level/core/error/failures.dart';
 import 'package:college_level/core/network/api_response.dart';
-import 'package:college_level/features/leaderboard/data/models/leaderboard_model.dart';
-import 'package:college_level/features/leaderboard/domain/entities/leaderboard.dart';
-import 'package:college_level/features/leaderboard/domain/usecases/leaderboard_usecases.dart';
-import 'package:college_level/features/leaderboard/presentation/bloc/leaderboard_cubit.dart';
+import 'package:college_level/features/student/leaderboard/data/models/leaderboard_model.dart';
+import 'package:college_level/features/student/leaderboard/domain/entities/leaderboard.dart';
+import 'package:college_level/features/student/leaderboard/domain/usecases/leaderboard_usecases.dart';
+import 'package:college_level/features/student/leaderboard/presentation/bloc/leaderboard_cubit.dart';
 
 class _MockGetLeaderboard extends Mock implements GetLeaderboardUseCase {}
 

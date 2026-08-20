@@ -1,77 +1,105 @@
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../features/auth/data/datasources/auth_local_service.dart';
-import '../../../features/auth/data/datasources/auth_service.dart';
-import '../../../features/auth/data/repositories/auth_repository_impl.dart';
-import '../../../features/auth/domain/repositories/auth_repository.dart';
-import '../../../features/auth/domain/usecases/accept_invitation_usecase.dart';
-import '../../../features/auth/domain/usecases/password_reset_usecases.dart';
-import '../../../features/auth/domain/usecases/auth_usecases.dart';
-import '../../../features/auth/domain/usecases/login_usecase.dart';
-import '../../../features/auth/presentation/bloc/auth/auth_bloc.dart';
-import '../../../features/courses/data/datasources/course_service.dart';
-import '../../../features/courses/data/repositories/course_repository_impl.dart';
-import '../../../features/courses/domain/repositories/course_repository.dart';
-import '../../../features/courses/domain/usecases/course_usecases.dart';
-import '../../../features/courses/domain/usecases/material_comment_usecases.dart';
-import '../../../features/discussions/data/datasources/discussion_service.dart';
-import '../../../features/discussions/data/repositories/discussion_repository_impl.dart';
-import '../../../features/discussions/domain/repositories/discussion_repository.dart';
-import '../../../features/discussions/domain/usecases/discussion_usecases.dart';
-import '../../../features/files/data/datasources/file_service.dart';
-import '../../../features/files/data/repositories/file_repository_impl.dart';
-import '../../../features/files/domain/repositories/file_repository.dart';
-import '../../../features/files/domain/usecases/file_usecases.dart';
-import '../../../features/notes/data/datasources/notes_service.dart';
-import '../../../features/notes/data/repositories/notes_repository_impl.dart';
-import '../../../features/notes/domain/repositories/notes_repository.dart';
-import '../../../features/notes/domain/usecases/notes_usecases.dart';
-import '../../../features/practice/data/datasources/practice_service.dart';
-import '../../../features/practice/data/repositories/practice_repository_impl.dart';
-import '../../../features/practice/domain/repositories/practice_repository.dart';
-import '../../../features/academic_calendar/data/datasources/academic_calendar_service.dart';
-import '../../../features/academic_calendar/data/repositories/academic_calendar_repository_impl.dart';
-import '../../../features/academic_calendar/domain/repositories/academic_calendar_repository.dart';
-import '../../../features/academic_calendar/domain/usecases/academic_calendar_usecases.dart';
-import '../../../features/analytics/data/datasources/analytics_service.dart';
-import '../../../features/assessments/data/datasources/assessment_service.dart';
-import '../../../features/assessments/data/repositories/assessment_repository_impl.dart';
-import '../../../features/assessments/domain/repositories/assessment_repository.dart';
-import '../../../features/assessments/domain/usecases/attempt_usecases.dart';
-import '../../../features/assessments/domain/usecases/list_course_assessments_usecase.dart';
-import '../../../features/announcements/data/datasources/announcement_service.dart';
-import '../../../features/announcements/data/repositories/announcement_repository_impl.dart';
-import '../../../features/announcements/domain/repositories/announcement_repository.dart';
-import '../../../features/announcements/domain/usecases/announcement_usecases.dart';
-import '../../../features/attendance/data/datasources/attendance_service.dart';
-import '../../../features/attendance/data/repositories/attendance_repository_impl.dart';
-import '../../../features/attendance/domain/repositories/attendance_repository.dart';
-import '../../../features/attendance/domain/usecases/attendance_usecases.dart';
-import '../../../features/calendar/data/datasources/calendar_service.dart';
-import '../../../features/calendar/data/repositories/calendar_repository_impl.dart';
-import '../../../features/calendar/domain/repositories/calendar_repository.dart';
-import '../../../features/calendar/domain/usecases/calendar_usecases.dart';
-import '../../../features/analytics/data/repositories/analytics_repository_impl.dart';
-import '../../../features/analytics/domain/repositories/analytics_repository.dart';
-import '../../../features/analytics/domain/usecases/analytics_usecases.dart';
-import '../../../features/leaderboard/data/datasources/leaderboard_service.dart';
-import '../../../features/public_profile/data/datasources/public_profile_service.dart';
-import '../../../features/public_profile/data/repositories/public_profile_repository_impl.dart';
-import '../../../features/public_profile/domain/repositories/public_profile_repository.dart';
-import '../../../features/public_profile/domain/usecases/get_public_profile_usecase.dart';
-import '../../../features/leaderboard/data/repositories/leaderboard_repository_impl.dart';
-import '../../../features/leaderboard/domain/repositories/leaderboard_repository.dart';
-import '../../../features/leaderboard/domain/usecases/leaderboard_usecases.dart';
-import '../../../features/practice/domain/usecases/practice_usecases.dart';
-import '../../../features/rating/data/datasources/rating_service.dart';
-import '../../../features/rating/data/repositories/rating_repository_impl.dart';
-import '../../../features/rating/domain/repositories/rating_repository.dart';
-import '../../../features/rating/domain/usecases/get_my_rating_usecase.dart';
-import '../../../features/rewards/data/datasources/rewards_service.dart';
-import '../../../features/rewards/data/repositories/rewards_repository_impl.dart';
-import '../../../features/rewards/domain/repositories/rewards_repository.dart';
-import '../../../features/rewards/domain/usecases/rewards_usecases.dart';
+import '../../../features/shared/auth/data/datasources/auth_local_service.dart';
+import '../../../features/shared/auth/data/datasources/auth_service.dart';
+import '../../../features/shared/auth/data/repositories/auth_repository_impl.dart';
+import '../../../features/shared/auth/domain/repositories/auth_repository.dart';
+import '../../../features/shared/auth/domain/usecases/accept_invitation_usecase.dart';
+import '../../../features/shared/auth/domain/usecases/password_reset_usecases.dart';
+import '../../../features/shared/auth/domain/usecases/auth_usecases.dart';
+import '../../../features/shared/auth/domain/usecases/login_usecase.dart';
+import '../../../features/shared/auth/presentation/bloc/auth/auth_bloc.dart';
+import '../../../features/student/courses/data/datasources/course_service.dart';
+import '../../../features/student/courses/data/repositories/course_repository_impl.dart';
+import '../../../features/student/courses/domain/repositories/course_repository.dart';
+import '../../../features/student/courses/domain/usecases/course_usecases.dart';
+import '../../../features/shared/material_comments/domain/usecases/material_comment_usecases.dart';
+import '../../../features/student/discussions/data/datasources/discussion_service.dart';
+import '../../../features/student/discussions/data/repositories/discussion_repository_impl.dart';
+import '../../../features/student/discussions/domain/repositories/discussion_repository.dart';
+import '../../../features/student/discussions/domain/usecases/discussion_usecases.dart';
+import '../../../features/shared/files/data/datasources/file_service.dart';
+import '../../../features/shared/files/data/repositories/file_repository_impl.dart';
+import '../../../features/shared/files/domain/repositories/file_repository.dart';
+import '../../../features/shared/files/domain/usecases/file_usecases.dart';
+import '../../../features/shared/notes/data/datasources/notes_service.dart';
+import '../../../features/shared/notes/data/repositories/notes_repository_impl.dart';
+import '../../../features/shared/notes/domain/repositories/notes_repository.dart';
+import '../../../features/shared/notes/domain/usecases/notes_usecases.dart';
+import '../../../features/student/practice/data/datasources/practice_service.dart';
+import '../../../features/student/practice/data/repositories/practice_repository_impl.dart';
+import '../../../features/student/practice/domain/repositories/practice_repository.dart';
+import '../../../features/student/academic_calendar/data/datasources/academic_calendar_service.dart';
+import '../../../features/student/academic_calendar/data/repositories/academic_calendar_repository_impl.dart';
+import '../../../features/student/academic_calendar/domain/repositories/academic_calendar_repository.dart';
+import '../../../features/student/academic_calendar/domain/usecases/academic_calendar_usecases.dart';
+import '../../../features/student/analytics/data/datasources/analytics_service.dart';
+import '../../../features/student/assessments/data/datasources/assessment_service.dart';
+import '../../../features/student/assessments/data/repositories/assessment_repository_impl.dart';
+import '../../../features/student/assessments/domain/repositories/assessment_repository.dart';
+import '../../../features/student/assessments/domain/usecases/attempt_usecases.dart';
+import '../../../features/student/assessments/domain/usecases/list_course_assessments_usecase.dart';
+import '../../../features/student/announcements/data/datasources/announcement_service.dart';
+import '../../../features/student/announcements/data/repositories/announcement_repository_impl.dart';
+import '../../../features/student/announcements/domain/repositories/announcement_repository.dart';
+import '../../../features/student/announcements/domain/usecases/announcement_usecases.dart';
+import '../../../features/student/attendance/data/datasources/attendance_service.dart';
+import '../../../features/student/attendance/data/repositories/attendance_repository_impl.dart';
+import '../../../features/student/attendance/domain/repositories/attendance_repository.dart';
+import '../../../features/student/attendance/domain/usecases/attendance_usecases.dart';
+import '../../../features/student/calendar/data/datasources/calendar_service.dart';
+import '../../../features/student/calendar/data/repositories/calendar_repository_impl.dart';
+import '../../../features/student/calendar/domain/repositories/calendar_repository.dart';
+import '../../../features/student/calendar/domain/usecases/calendar_usecases.dart';
+import '../../../features/student/analytics/data/repositories/analytics_repository_impl.dart';
+import '../../../features/student/analytics/domain/repositories/analytics_repository.dart';
+import '../../../features/student/analytics/domain/usecases/analytics_usecases.dart';
+import '../../../features/student/leaderboard/data/datasources/leaderboard_service.dart';
+import '../../../features/student/public_profile/data/datasources/public_profile_service.dart';
+import '../../../features/student/public_profile/data/repositories/public_profile_repository_impl.dart';
+import '../../../features/student/public_profile/domain/repositories/public_profile_repository.dart';
+import '../../../features/student/public_profile/domain/usecases/get_public_profile_usecase.dart';
+import '../../../features/student/leaderboard/data/repositories/leaderboard_repository_impl.dart';
+import '../../../features/student/leaderboard/domain/repositories/leaderboard_repository.dart';
+import '../../../features/student/leaderboard/domain/usecases/leaderboard_usecases.dart';
+import '../../../features/shared/notifications/data/datasources/notification_service.dart';
+import '../../../features/shared/notifications/data/repositories/notification_repository_impl.dart';
+import '../../../features/shared/notifications/domain/repositories/notification_repository.dart';
+import '../../../features/shared/notifications/domain/usecases/notification_usecases.dart';
+import '../../../features/teacher/dashboard/data/datasources/teacher_service.dart';
+import '../../../features/teacher/enrollments/data/datasources/enrollment_service.dart';
+import '../../../features/teacher/enrollments/data/repositories/enrollment_repository_impl.dart';
+import '../../../features/teacher/enrollments/domain/repositories/enrollment_repository.dart';
+import '../../../features/teacher/enrollments/domain/usecases/enrollment_usecases.dart';
+import '../../../features/teacher/assessments/data/datasources/teacher_assessment_service.dart';
+import '../../../features/teacher/assessments/data/datasources/teacher_grading_service.dart';
+import '../../../features/teacher/assessments/data/repositories/teacher_assessment_repository_impl.dart';
+import '../../../features/teacher/assessments/data/repositories/teacher_grading_repository_impl.dart';
+import '../../../features/teacher/assessments/domain/repositories/teacher_assessment_repository.dart';
+import '../../../features/teacher/assessments/domain/repositories/teacher_grading_repository.dart';
+import '../../../features/teacher/assessments/domain/usecases/teacher_assessment_usecases.dart';
+import '../../../features/teacher/assessments/domain/usecases/teacher_grading_usecases.dart';
+import '../../../features/teacher/attendance/data/datasources/teacher_attendance_service.dart';
+import '../../../features/teacher/attendance/data/repositories/teacher_attendance_repository_impl.dart';
+import '../../../features/teacher/attendance/domain/repositories/teacher_attendance_repository.dart';
+import '../../../features/teacher/attendance/domain/usecases/attendance_usecases.dart';
+import '../../../features/teacher/courses/data/datasources/teacher_course_service.dart';
+import '../../../features/teacher/courses/data/repositories/teacher_course_repository_impl.dart';
+import '../../../features/teacher/courses/domain/repositories/teacher_course_repository.dart';
+import '../../../features/teacher/courses/domain/usecases/teacher_course_usecases.dart';
+import '../../../features/teacher/dashboard/data/repositories/teacher_repository_impl.dart';
+import '../../../features/teacher/dashboard/domain/repositories/teacher_repository.dart';
+import '../../../features/teacher/dashboard/domain/usecases/teacher_usecases.dart';
+import '../../../features/student/practice/domain/usecases/practice_usecases.dart';
+import '../../../features/student/rating/data/datasources/rating_service.dart';
+import '../../../features/student/rating/data/repositories/rating_repository_impl.dart';
+import '../../../features/student/rating/domain/repositories/rating_repository.dart';
+import '../../../features/student/rating/domain/usecases/get_my_rating_usecase.dart';
+import '../../../features/student/rewards/data/datasources/rewards_service.dart';
+import '../../../features/student/rewards/data/repositories/rewards_repository_impl.dart';
+import '../../../features/student/rewards/domain/repositories/rewards_repository.dart';
+import '../../../features/student/rewards/domain/usecases/rewards_usecases.dart';
 import '../../network/dio_client.dart';
 import '../../network/session_manager.dart';
 import '../theme/reduce_transparency_cubit.dart';
@@ -92,6 +120,13 @@ Future<void> initServiceLocator() async {
   _initAnalytics();
   _initRating();
   _initLeaderboard();
+  _initTeacher();
+  _initTeacherCourses();
+  _initTeacherAttendance();
+  _initTeacherAssessments();
+  _initTeacherGrading();
+  _initEnrollments();
+  _initNotifications();
   _initPublicProfile();
   _initAssessments();
   _initAttendance();
@@ -126,6 +161,7 @@ void _initFiles() {
     ..registerLazySingleton<FileRepository>(() => FileRepositoryImpl(sl()))
     ..registerLazySingleton(() => GetFileUseCase(sl()))
     ..registerLazySingleton(() => UploadFileUseCase(sl()))
+    ..registerLazySingleton(() => UploadFilesUseCase(sl()))
     ..registerLazySingleton(() => ResolveFileUrlUseCase(sl()));
 }
 
@@ -240,6 +276,93 @@ void _initPublicProfile() {
       () => PublicProfileRepositoryImpl(sl()),
     )
     ..registerLazySingleton(() => GetPublicProfileUseCase(sl()));
+}
+
+/// The teacher area. One endpoint so far — the dashboard aggregate.
+void _initTeacher() {
+  sl
+    ..registerLazySingleton<TeacherService>(() => TeacherService(sl()))
+    ..registerLazySingleton<TeacherRepository>(
+      () => TeacherRepositoryImpl(sl()),
+    )
+    ..registerLazySingleton(() => GetTeacherDashboardUseCase(sl()));
+}
+
+/// The teacher's courses, the section-scoped tree, and the learning-plan
+/// authoring beneath it.
+void _initTeacherCourses() {
+  sl
+    ..registerLazySingleton<TeacherCourseService>(
+      () => TeacherCourseService(sl()),
+    )
+    ..registerLazySingleton<TeacherCourseRepository>(
+      () => TeacherCourseRepositoryImpl(sl()),
+    )
+    ..registerLazySingleton(() => ListTeacherCoursesUseCase(sl()))
+    ..registerLazySingleton(() => ListCourseDivisionsUseCase(sl()))
+    ..registerLazySingleton(() => GetTeacherCourseTreeUseCase(sl()))
+    ..registerLazySingleton(() => ModuleUseCases(sl()))
+    ..registerLazySingleton(() => TopicUseCases(sl()))
+    ..registerLazySingleton(() => MaterialUseCases(sl()));
+}
+
+/// Teacher attendance: sessions, roster marking, and the course rollup.
+void _initTeacherAttendance() {
+  sl
+    ..registerLazySingleton<TeacherAttendanceService>(
+      () => TeacherAttendanceService(sl()),
+    )
+    ..registerLazySingleton<TeacherAttendanceRepository>(
+      () => TeacherAttendanceRepositoryImpl(sl()),
+    )
+    ..registerLazySingleton(() => AttendanceUseCases(sl()));
+}
+
+/// Teacher assessment authoring. These paths sit on the `/assessments` router
+/// rather than under `/teacher`, unlike the grading endpoints.
+void _initTeacherAssessments() {
+  sl
+    ..registerLazySingleton<TeacherAssessmentService>(() => TeacherAssessmentService(sl()))
+    ..registerLazySingleton<TeacherAssessmentRepository>(
+      () => TeacherAssessmentRepositoryImpl(sl()),
+    )
+    ..registerLazySingleton(() => TeacherAssessmentUseCases(sl()));
+}
+
+/// Grading. Deliberately separate from authoring above: these paths are on
+/// `/teacher/assignments`, and mixing the two families up is easy to do.
+void _initTeacherGrading() {
+  sl
+    ..registerLazySingleton<TeacherGradingService>(
+      () => TeacherGradingService(sl()),
+    )
+    ..registerLazySingleton<TeacherGradingRepository>(
+      () => TeacherGradingRepositoryImpl(sl()),
+    )
+    ..registerLazySingleton(() => TeacherGradingUseCases(sl()));
+}
+
+/// Course enrolments. The endpoints are guarded `school_admin` + `teacher`, so
+/// a class_teacher or hod is refused — the tab gates its own writes on that.
+void _initEnrollments() {
+  sl
+    ..registerLazySingleton<EnrollmentService>(() => EnrollmentService(sl()))
+    ..registerLazySingleton<EnrollmentRepository>(
+      () => EnrollmentRepositoryImpl(sl()),
+    )
+    ..registerLazySingleton(() => EnrollmentUseCases(sl()));
+}
+
+/// The notification feed. Role-agnostic: the backend resolves the recipient
+/// from the caller's roles, so student and teacher read the same endpoint.
+void _initNotifications() {
+  sl
+    ..registerLazySingleton<NotificationService>(() => NotificationService(sl()))
+    ..registerLazySingleton<NotificationRepository>(
+      () => NotificationRepositoryImpl(sl()),
+    )
+    ..registerLazySingleton(() => ListNotificationsUseCase(sl()))
+    ..registerLazySingleton(() => MarkNotificationReadUseCase(sl()));
 }
 
 void _initLeaderboard() {

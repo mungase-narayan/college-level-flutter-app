@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../common/widgets/app_card.dart';
 import '../../config/theme/app_theme.dart';
 import '../animations/glass_curves.dart';
 import '../animations/glass_press.dart';
@@ -133,33 +134,19 @@ class LiquidGlassSectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = context.scheme;
-    final subtitle = this.subtitle;
-
     return LiquidGlassCard(
       padding: padding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              if (icon != null) ...[
-                Icon(icon, size: 18, color: scheme.primary),
-                const SizedBox(width: GlassSpacing.sm),
-              ],
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: theme.textTheme.titleSmall),
-                    if (subtitle != null)
-                      Text(subtitle, style: theme.textTheme.bodySmall),
-                  ],
-                ),
-              ),
-              ?trailing,
-            ],
+          // Shared with the Material variant so the two platforms cannot drift
+          // on where the icon sits relative to the heading.
+          SectionCardHeader(
+            title: title,
+            subtitle: subtitle,
+            icon: icon,
+            trailing: trailing,
+            gap: GlassSpacing.sm,
           ),
           const SizedBox(height: 14),
           child,

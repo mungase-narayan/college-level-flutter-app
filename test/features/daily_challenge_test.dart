@@ -5,13 +5,13 @@ import 'package:mocktail/mocktail.dart';
 import 'package:college_level/core/common/bloc/remote_cubit.dart';
 import 'package:college_level/core/error/failures.dart';
 import 'package:college_level/core/usecases/usecase.dart';
-import 'package:college_level/features/practice/domain/entities/daily_challenge.dart';
-import 'package:college_level/features/practice/domain/entities/practice_attempt.dart';
-import 'package:college_level/features/practice/domain/entities/practice_question.dart';
-import 'package:college_level/features/practice/domain/usecases/practice_usecases.dart';
-import 'package:college_level/features/practice/presentation/bloc/daily_challenge_cubit.dart';
-import 'package:college_level/features/practice/presentation/bloc/daily_solve_cubit.dart';
-import 'package:college_level/features/rewards/domain/usecases/rewards_usecases.dart';
+import 'package:college_level/features/student/practice/domain/entities/daily_challenge.dart';
+import 'package:college_level/features/student/practice/domain/entities/practice_attempt.dart';
+import 'package:college_level/features/student/practice/domain/entities/practice_question.dart';
+import 'package:college_level/features/student/practice/domain/usecases/practice_usecases.dart';
+import 'package:college_level/features/student/practice/presentation/bloc/daily_challenge_cubit.dart';
+import 'package:college_level/features/student/practice/presentation/bloc/daily_solve_cubit.dart';
+import 'package:college_level/features/student/rewards/domain/usecases/rewards_usecases.dart';
 
 class _MockToday extends Mock implements GetDailyChallengeUseCase {}
 

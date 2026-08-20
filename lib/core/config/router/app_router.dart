@@ -4,71 +4,81 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../features/auth/domain/usecases/accept_invitation_usecase.dart';
-import '../../../features/auth/domain/usecases/password_reset_usecases.dart';
-import '../../../features/auth/presentation/bloc/auth/auth_bloc.dart';
-import '../../../features/auth/presentation/pages/login_page.dart';
-import '../../../features/auth/presentation/pages/role_placeholder_page.dart';
-import '../../../features/assessments/presentation/bloc/assessment_detail_cubit.dart';
-import '../../../features/assessments/presentation/bloc/assignments_cubit.dart';
-import '../../../features/assessments/presentation/bloc/quizzes_cubit.dart';
-import '../../../features/assessments/presentation/pages/assessment_detail_page.dart';
-import '../../../features/calendar/presentation/bloc/calendar_cubit.dart';
-import '../../../features/calendar/presentation/bloc/today_sessions_cubit.dart';
-import '../../../features/calendar/presentation/pages/calendar_page.dart';
-import '../../../features/assessments/presentation/pages/assignments_page.dart';
-import '../../../features/assessments/presentation/pages/quizzes_page.dart';
-import '../../../features/academic_calendar/presentation/bloc/academic_calendar_cubit.dart';
-import '../../../features/academic_calendar/presentation/pages/academic_calendar_page.dart';
-import '../../../features/announcements/presentation/bloc/announcement_detail_cubit.dart';
-import '../../../features/announcements/presentation/bloc/announcements_cubit.dart';
-import '../../../features/announcements/presentation/pages/announcement_detail_page.dart';
-import '../../../features/announcements/presentation/pages/announcements_page.dart';
-import '../../../features/attendance/presentation/bloc/attendance_overview_cubit.dart';
-import '../../../features/attendance/presentation/bloc/attendance_sessions_cubit.dart';
-import '../../../features/attendance/presentation/pages/attendance_page.dart';
-import '../../../features/auth/presentation/pages/forgot_password_page.dart';
-import '../../../features/badges/presentation/bloc/badges_cubit.dart';
-import '../../../features/badges/presentation/pages/badges_page.dart';
-import '../../../features/leaderboard/presentation/bloc/leaderboard_cubit.dart';
-import '../../../features/leaderboard/presentation/pages/leaderboard_page.dart';
-import '../../../features/public_profile/presentation/bloc/public_profile_cubit.dart';
-import '../../../features/rating/presentation/bloc/rating_cubit.dart';
-import '../../../features/rating/presentation/bloc/rating_leaderboard_cubit.dart';
-import '../../../features/rating/presentation/pages/rating_page.dart';
-import '../../../features/public_profile/presentation/pages/public_profile_page.dart';
-import '../../../features/rewards/presentation/bloc/order_chat_cubit.dart';
-import '../../../features/rewards/presentation/bloc/store_cubit.dart';
-import '../../../features/rewards/presentation/bloc/wallet_cubit.dart';
-import '../../../features/rewards/presentation/pages/wallet_page.dart';
-import '../../../features/auth/presentation/pages/reset_password_page.dart';
-import '../../../features/auth/presentation/pages/set_password_page.dart';
-import '../../../features/courses/presentation/bloc/courses_cubit.dart';
-import '../../../features/courses/presentation/pages/course_detail_page.dart';
-import '../../../features/courses/presentation/pages/courses_page.dart';
-import '../../../features/dashboard/presentation/bloc/dashboard_cubit.dart';
-import '../../../features/dashboard/presentation/pages/dashboard_page.dart';
-import '../../../features/discussions/presentation/bloc/discussion_cubit.dart';
-import '../../../features/notes/domain/entities/note.dart';
-import '../../../features/notes/presentation/bloc/material_notes_cubit.dart';
-import '../../../features/notes/presentation/bloc/my_notes_stats_cubit.dart';
-import '../../../features/notes/presentation/bloc/note_detail_cubit.dart';
-import '../../../features/notes/presentation/bloc/notes_hub_cubit.dart';
-import '../../../features/notes/presentation/pages/note_detail_page.dart';
-import '../../../features/notes/presentation/pages/notes_page.dart';
-import '../../../features/practice/presentation/bloc/daily_challenge_cubit.dart';
-import '../../../features/practice/presentation/bloc/daily_solve_cubit.dart';
-import '../../../features/practice/presentation/bloc/practice_list_cubit.dart';
-import '../../../features/practice/presentation/bloc/practice_question_cubit.dart';
-import '../../../features/practice/presentation/pages/daily_challenge_page.dart';
-import '../../../features/practice/presentation/pages/daily_solve_page.dart';
-import '../../../features/practice/presentation/pages/practice_question_page.dart';
-import '../../../features/practice/presentation/pages/practice_page.dart';
-import '../../../features/profile/presentation/pages/profile_page.dart';
-import '../../../features/settings/presentation/pages/licenses_page.dart';
-import '../../../features/settings/presentation/pages/settings_page.dart';
-import '../../../features/shell/presentation/pages/student_shell.dart';
-import '../../../features/shell/presentation/widgets/student_nav.dart';
+import '../../../features/shared/auth/domain/usecases/accept_invitation_usecase.dart';
+import '../../../features/shared/auth/domain/usecases/password_reset_usecases.dart';
+import '../../../features/shared/auth/presentation/bloc/auth/auth_bloc.dart';
+import '../../../features/shared/auth/presentation/pages/login_page.dart';
+import '../../../features/shared/auth/presentation/pages/role_placeholder_page.dart';
+import '../../../features/student/assessments/presentation/bloc/assessment_detail_cubit.dart';
+import '../../../features/student/assessments/presentation/bloc/assignments_cubit.dart';
+import '../../../features/student/assessments/presentation/bloc/quizzes_cubit.dart';
+import '../../../features/student/assessments/presentation/pages/assessment_detail_page.dart';
+import '../../../features/student/calendar/presentation/bloc/calendar_cubit.dart';
+import '../../../features/student/calendar/presentation/bloc/today_sessions_cubit.dart';
+import '../../../features/student/calendar/presentation/pages/calendar_page.dart';
+import '../../../features/student/assessments/presentation/pages/assignments_page.dart';
+import '../../../features/student/assessments/presentation/pages/quizzes_page.dart';
+import '../../../features/student/academic_calendar/presentation/bloc/academic_calendar_cubit.dart';
+import '../../../features/student/academic_calendar/presentation/pages/academic_calendar_page.dart';
+import '../../../features/student/announcements/presentation/bloc/announcement_detail_cubit.dart';
+import '../../../features/student/announcements/presentation/bloc/announcements_cubit.dart';
+import '../../../features/student/announcements/presentation/pages/announcement_detail_page.dart';
+import '../../../features/student/announcements/presentation/pages/announcements_page.dart';
+import '../../../features/student/attendance/presentation/bloc/attendance_overview_cubit.dart';
+import '../../../features/student/attendance/presentation/bloc/attendance_sessions_cubit.dart';
+import '../../../features/student/attendance/presentation/pages/attendance_page.dart';
+import '../../../features/shared/auth/presentation/pages/forgot_password_page.dart';
+import '../../../features/student/badges/presentation/bloc/badges_cubit.dart';
+import '../../../features/student/badges/presentation/pages/badges_page.dart';
+import '../../../features/student/leaderboard/presentation/bloc/leaderboard_cubit.dart';
+import '../../../features/student/leaderboard/presentation/pages/leaderboard_page.dart';
+import '../../../features/student/public_profile/presentation/bloc/public_profile_cubit.dart';
+import '../../../features/student/rating/presentation/bloc/rating_cubit.dart';
+import '../../../features/student/rating/presentation/bloc/rating_leaderboard_cubit.dart';
+import '../../../features/student/rating/presentation/pages/rating_page.dart';
+import '../../../features/student/public_profile/presentation/pages/public_profile_page.dart';
+import '../../../features/student/rewards/presentation/bloc/order_chat_cubit.dart';
+import '../../../features/student/rewards/presentation/bloc/store_cubit.dart';
+import '../../../features/student/rewards/presentation/bloc/wallet_cubit.dart';
+import '../../../features/student/rewards/presentation/pages/wallet_page.dart';
+import '../../../features/shared/auth/presentation/pages/reset_password_page.dart';
+import '../../../features/shared/auth/presentation/pages/set_password_page.dart';
+import '../../../features/student/courses/presentation/bloc/courses_cubit.dart';
+import '../../../features/student/courses/presentation/pages/course_detail_page.dart';
+import '../../../features/student/courses/presentation/pages/courses_page.dart';
+import '../../../features/student/dashboard/presentation/bloc/dashboard_cubit.dart';
+import '../../../features/student/dashboard/presentation/pages/dashboard_page.dart';
+import '../../../features/student/discussions/presentation/bloc/discussion_cubit.dart';
+import '../../../features/shared/notes/domain/entities/note.dart';
+import '../../../features/shared/notes/presentation/bloc/material_notes_cubit.dart';
+import '../../../features/shared/notes/presentation/bloc/my_notes_stats_cubit.dart';
+import '../../../features/shared/notes/presentation/bloc/note_detail_cubit.dart';
+import '../../../features/shared/notes/presentation/bloc/notes_hub_cubit.dart';
+import '../../../features/shared/notes/presentation/pages/note_detail_page.dart';
+import '../../../features/shared/notes/presentation/pages/notes_page.dart';
+import '../../../features/student/practice/presentation/bloc/daily_challenge_cubit.dart';
+import '../../../features/student/practice/presentation/bloc/daily_solve_cubit.dart';
+import '../../../features/student/practice/presentation/bloc/practice_list_cubit.dart';
+import '../../../features/student/practice/presentation/bloc/practice_question_cubit.dart';
+import '../../../features/student/practice/presentation/pages/daily_challenge_page.dart';
+import '../../../features/student/practice/presentation/pages/daily_solve_page.dart';
+import '../../../features/student/practice/presentation/pages/practice_question_page.dart';
+import '../../../features/student/practice/presentation/pages/practice_page.dart';
+import '../../../features/shared/profile/presentation/pages/profile_page.dart';
+import '../../../features/shared/settings/presentation/pages/licenses_page.dart';
+import '../../../features/shared/settings/presentation/pages/settings_page.dart';
+import '../../../features/shared/notifications/presentation/bloc/notifications_cubit.dart';
+import '../../../features/shared/shell/presentation/pages/student_shell.dart';
+import '../../../features/shared/shell/presentation/widgets/student_nav.dart';
+import '../../../features/shared/shell/presentation/widgets/teacher_nav.dart';
+import '../../../features/teacher/dashboard/presentation/bloc/teacher_dashboard_cubit.dart';
+import '../../../features/teacher/courses/presentation/bloc/course_content_cubit.dart';
+import '../../../features/teacher/courses/presentation/bloc/teacher_course_detail_cubit.dart';
+import '../../../features/teacher/courses/presentation/bloc/teacher_courses_cubit.dart';
+import '../../../features/teacher/courses/presentation/pages/teacher_course_detail_page.dart';
+import '../../../features/teacher/courses/presentation/pages/teacher_courses_page.dart';
+import '../../../features/teacher/dashboard/presentation/pages/teacher_dashboard_page.dart';
+import '../../../features/teacher/dashboard/presentation/pages/teacher_shell.dart';
 import '../../common/pages/feature_pending_page.dart';
 import '../../common/pages/not_found_page.dart';
 import '../../common/pages/splash_page.dart';
@@ -100,6 +110,7 @@ class Routes {
 GoRouter createRouter(AuthBloc authBloc) {
   final rootKey = GlobalKey<NavigatorState>();
   final shellKey = GlobalKey<NavigatorState>();
+  final teacherShellKey = GlobalKey<NavigatorState>();
 
   return GoRouter(
     navigatorKey: rootKey,
@@ -132,6 +143,12 @@ GoRouter createRouter(AuthBloc authBloc) {
       // `StudentLayout` performs before rendering.
       if (location.startsWith(StudentRoutes.root) &&
           !auth.hasRole(UserRole.student)) {
+        return auth.homePath;
+      }
+
+      // The teacher area accepts all three teaching roles, exactly as the React
+      // `TeacherLayout` does with its `TEACHER_ROLES` intersection.
+      if (location.startsWith(TeacherRoutes.root) && !auth.hasTeacherRole) {
         return auth.homePath;
       }
 
@@ -548,13 +565,127 @@ GoRouter createRouter(AuthBloc authBloc) {
         },
       ),
 
+      // ── Teacher ───────────────────────────────────────────────────────────
+      // One shell over all twelve sidebar destinations, mirroring the student
+      // area. Dashboard is built; the rest are routed, guarded, and reachable,
+      // and each is replaced as its tab lands.
+      ShellRoute(
+        navigatorKey: teacherShellKey,
+        builder: (context, state, child) => TeacherShell(child: child),
+        routes: [
+          GoRoute(
+            path: TeacherRoutes.root,
+            redirect: (_, _) => TeacherRoutes.dashboard,
+          ),
+
+          // ── Overview ──────────────────────────────────────────────────────
+          GoRoute(
+            path: TeacherRoutes.dashboard,
+            builder: (_, _) => MultiBlocProvider(
+              providers: [
+                BlocProvider(
+                  create: (_) => TeacherDashboardCubit(getDashboard: sl()),
+                ),
+                // The activity feed is its own request, so a notification
+                // failure must not take the dashboard down with it.
+                BlocProvider(
+                  create: (_) => NotificationsCubit(
+                    list: sl(),
+                    markRead: sl(),
+                  ),
+                ),
+              ],
+              child: const TeacherDashboardPage(),
+            ),
+          ),
+
+          // ── Teaching ──────────────────────────────────────────────────────
+          GoRoute(
+            path: TeacherRoutes.courses,
+            builder: (_, _) => BlocProvider(
+              create: (_) => TeacherCoursesCubit(listCourses: sl()),
+              child: const TeacherCoursesPage(),
+            ),
+          ),
+          _pending(TeacherRoutes.quizzes, 'Quizzes', Icons.checklist_rounded),
+          _pending(
+            TeacherRoutes.assignments,
+            'Assignments',
+            Icons.assignment_rounded,
+          ),
+          _pending(
+            TeacherRoutes.attendance,
+            'Attendance',
+            Icons.event_available_rounded,
+          ),
+
+          // ── Academics ─────────────────────────────────────────────────────
+          _pending(TeacherRoutes.questionBank, 'Question Bank', Icons.quiz_rounded),
+          _pending(
+            TeacherRoutes.practiceReview,
+            'Practice Review',
+            Icons.rate_review_rounded,
+          ),
+          _pending(TeacherRoutes.notes, 'Notes', Icons.sticky_note_2_rounded),
+
+          // ── Campus ────────────────────────────────────────────────────────
+          _pending(
+            TeacherRoutes.announcements,
+            'Announcements',
+            Icons.campaign_rounded,
+          ),
+          _pending(TeacherRoutes.calendar, 'Calendar', Icons.calendar_month_rounded),
+          _pending(
+            TeacherRoutes.academicCalendar,
+            'Academic Calendar',
+            Icons.date_range_rounded,
+          ),
+          _pending(TeacherRoutes.settings, 'Settings', Icons.settings_rounded),
+
+          // Reached from the app bar avatar and the menu sheet. The screen is
+          // read-only and entirely session-derived, so it serves both areas.
+          GoRoute(
+            path: TeacherRoutes.profile,
+            builder: (_, _) => const ProfilePage(),
+          ),
+        ],
+      ),
+
+      // The course detail is a drill-down, not a tab: it carries seven tabs of
+      // its own and a back button, so it covers the shell chrome rather than
+      // rendering beneath it — the same treatment the student course detail has.
+      GoRoute(
+        path: '${TeacherRoutes.courses}/:courseId',
+        parentNavigatorKey: rootKey,
+        builder: (context, state) {
+          final courseId = state.pathParameters['courseId'] ?? '';
+          return MultiBlocProvider(
+            providers: [
+              BlocProvider(
+                create: (_) => TeacherCourseDetailCubit(
+                  listDivisions: sl(),
+                  getTree: sl(),
+                  courseId: courseId,
+                ),
+              ),
+              // Mutations live in their own cubit so a failed save never
+              // disturbs the tree already on screen.
+              BlocProvider(
+                create: (_) => CourseContentCubit(
+                  modules: sl(),
+                  topics: sl(),
+                  materials: sl(),
+                ),
+              ),
+            ],
+            child: TeacherCourseDetailPage(courseId: courseId),
+          );
+        },
+      ),
+
       // ── Other roles ───────────────────────────────────────────────────────
       // These land correctly and can switch roles or log out; their feature
       // sets are later passes.
-      GoRoute(
-        path: '/teacher/dashboard',
-        builder: (_, _) => const RolePlaceholderPage(role: UserRole.teacher),
-      ),
       GoRoute(
         path: '/school-admin/dashboard',
         builder: (_, _) => const RolePlaceholderPage(role: UserRole.schoolAdmin),

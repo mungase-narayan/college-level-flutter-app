@@ -7,10 +7,10 @@ import 'package:college_level/core/config/theme/app_colors.dart';
 import 'package:college_level/core/constants/api_urls.dart';
 import 'package:college_level/core/error/failures.dart';
 import 'package:college_level/core/usecases/usecase.dart';
-import 'package:college_level/features/badges/data/models/badge_model.dart';
-import 'package:college_level/features/badges/domain/entities/badge.dart';
-import 'package:college_level/features/badges/presentation/bloc/badges_cubit.dart';
-import 'package:college_level/features/leaderboard/domain/usecases/leaderboard_usecases.dart';
+import 'package:college_level/features/student/badges/data/models/badge_model.dart';
+import 'package:college_level/features/student/badges/domain/entities/badge.dart';
+import 'package:college_level/features/student/badges/presentation/bloc/badges_cubit.dart';
+import 'package:college_level/features/student/leaderboard/domain/usecases/leaderboard_usecases.dart';
 
 class _MockGetBadges extends Mock implements GetBadgesUseCase {}
 

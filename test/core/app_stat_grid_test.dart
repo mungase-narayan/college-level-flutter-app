@@ -60,6 +60,78 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    testWidgets('a lone trailing tile fills the row instead of leaving a hole',
+        (tester) async {
+      // Three tiles in two columns. The odd one out used to sit at half width
+      // with dead space beside it, which reads as a card that failed to load.
+      await tester.pumpWidget(_unbounded(AppStatGrid(tiles: _tiles(3))));
+
+      expect(tester.takeException(), isNull);
+      final tiles = find.byType(AppStatTile);
+      expect(tiles, findsNWidgets(3));
+
+      final first = tester.getSize(tiles.at(0)).width;
+      final third = tester.getSize(tiles.at(2)).width;
+
+      // The stranded tile spans both columns plus the gutter between them.
+      expect(third, greaterThan(first));
+      expect(third, moreOrLessEquals(first * 2 + 12, epsilon: 0.5));
+    });
+
+    testWidgets('a full last row still splits evenly', (tester) async {
+      await tester.pumpWidget(_unbounded(AppStatGrid(tiles: _tiles(4))));
+
+      final widths = [
+        for (var i = 0; i < 4; i++)
+          tester.getSize(find.byType(AppStatTile).at(i)).width,
+      ];
+
+      expect(widths.toSet(), hasLength(1));
+    });
+
+    testWidgets('tiles without captions do not carry a captioned tile\'s height',
+        (tester) async {
+      // The course-detail grid has no captions on any of its five tiles. With a
+      // fixed extent they each kept the empty band a caption would have filled,
+      // which read on screen as a large unexplained gap under every number.
+      List<Widget> plain(int count) => [
+            for (var i = 0; i < count; i++)
+              AppStatTile(label: 'Credits $i', value: '3', icon: Icons.star),
+          ];
+
+      await tester.pumpWidget(_unbounded(AppStatGrid(tiles: plain(2))));
+      final withoutCaption =
+          tester.getSize(find.byType(AppStatTile).first).height;
+
+      await tester.pumpWidget(_unbounded(AppStatGrid(tiles: _tiles(2))));
+      final withCaption = tester.getSize(find.byType(AppStatTile).first).height;
+
+      expect(withoutCaption, lessThan(withCaption));
+    });
+
+    testWidgets('tiles in one row share the tallest tile\'s height',
+        (tester) async {
+      // Mixed captions in a row must still line up, or the row edge goes ragged.
+      await tester.pumpWidget(
+        _unbounded(
+          AppStatGrid(
+            tiles: [
+              const AppStatTile(label: 'Plain', value: '1'),
+              const AppStatTile(
+                label: 'Captioned',
+                value: '2',
+                caption: 'a caption',
+              ),
+            ],
+          ),
+        ),
+      );
+
+      final first = tester.getSize(find.byType(AppStatTile).at(0)).height;
+      final second = tester.getSize(find.byType(AppStatTile).at(1)).height;
+      expect(first, second);
+    });
+
     testWidgets('tile height does not shrink as columns increase',
         (tester) async {
       await tester.pumpWidget(_unbounded(AppStatGrid(tiles: _tiles(2))));

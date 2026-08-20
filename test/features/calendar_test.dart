@@ -6,15 +6,15 @@ import 'package:college_level/core/common/bloc/remote_cubit.dart';
 import 'package:college_level/core/error/failures.dart';
 import 'package:college_level/core/network/api_response.dart';
 import 'package:college_level/core/network/dio_client.dart';
-import 'package:college_level/features/calendar/data/datasources/calendar_service.dart';
-import 'package:college_level/features/calendar/data/models/calendar_entry_model.dart';
-import 'package:college_level/features/calendar/domain/entities/calendar_entry.dart';
-import 'package:college_level/features/calendar/domain/entities/calendar_view.dart';
-import 'package:college_level/features/calendar/domain/usecases/calendar_usecases.dart';
-import 'package:college_level/features/calendar/presentation/bloc/calendar_cubit.dart';
-import 'package:college_level/features/calendar/presentation/bloc/today_sessions_cubit.dart';
-import 'package:college_level/features/calendar/presentation/widgets/calendar_timeline.dart';
-import 'package:college_level/features/calendar/presentation/widgets/timetable_pdf.dart';
+import 'package:college_level/features/student/calendar/data/datasources/calendar_service.dart';
+import 'package:college_level/features/student/calendar/data/models/calendar_entry_model.dart';
+import 'package:college_level/features/student/calendar/domain/entities/calendar_entry.dart';
+import 'package:college_level/features/student/calendar/domain/entities/calendar_view.dart';
+import 'package:college_level/features/student/calendar/domain/usecases/calendar_usecases.dart';
+import 'package:college_level/features/student/calendar/presentation/bloc/calendar_cubit.dart';
+import 'package:college_level/features/student/calendar/presentation/bloc/today_sessions_cubit.dart';
+import 'package:college_level/features/student/calendar/presentation/widgets/calendar_timeline.dart';
+import 'package:college_level/features/student/calendar/presentation/widgets/timetable_pdf.dart';
 
 class _MockGetCalendar extends Mock implements GetCalendarUseCase {}
 

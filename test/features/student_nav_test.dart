@@ -1,4 +1,4 @@
-import 'package:college_level/features/shell/presentation/widgets/student_nav.dart';
+import 'package:college_level/features/shared/shell/presentation/widgets/student_nav.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// The drawer is a 1:1 port of the React sidebar, so its shape is part of the

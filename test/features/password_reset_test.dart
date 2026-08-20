@@ -7,9 +7,9 @@ import 'package:mocktail/mocktail.dart';
 import 'package:college_level/core/common/widgets/widgets.dart';
 import 'package:college_level/core/config/theme/app_theme.dart';
 import 'package:college_level/core/error/failures.dart';
-import 'package:college_level/features/auth/domain/usecases/password_reset_usecases.dart';
-import 'package:college_level/features/auth/presentation/pages/forgot_password_page.dart';
-import 'package:college_level/features/auth/presentation/pages/reset_password_page.dart';
+import 'package:college_level/features/shared/auth/domain/usecases/password_reset_usecases.dart';
+import 'package:college_level/features/shared/auth/presentation/pages/forgot_password_page.dart';
+import 'package:college_level/features/shared/auth/presentation/pages/reset_password_page.dart';
 
 class _MockRequestReset extends Mock implements RequestPasswordResetUseCase {}
 

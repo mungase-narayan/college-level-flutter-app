@@ -7,12 +7,12 @@ import 'package:mocktail/mocktail.dart';
 import 'package:college_level/core/error/failures.dart';
 import 'package:college_level/core/network/api_response.dart';
 import 'package:college_level/core/usecases/usecase.dart';
-import 'package:college_level/features/notes/data/models/note_model.dart';
-import 'package:college_level/features/notes/domain/entities/note.dart';
-import 'package:college_level/features/notes/domain/usecases/notes_usecases.dart';
-import 'package:college_level/features/notes/presentation/bloc/material_notes_cubit.dart';
-import 'package:college_level/features/notes/presentation/bloc/note_detail_cubit.dart';
-import 'package:college_level/features/notes/presentation/bloc/notes_hub_cubit.dart';
+import 'package:college_level/features/shared/notes/data/models/note_model.dart';
+import 'package:college_level/features/shared/notes/domain/entities/note.dart';
+import 'package:college_level/features/shared/notes/domain/usecases/notes_usecases.dart';
+import 'package:college_level/features/shared/notes/presentation/bloc/material_notes_cubit.dart';
+import 'package:college_level/features/shared/notes/presentation/bloc/note_detail_cubit.dart';
+import 'package:college_level/features/shared/notes/presentation/bloc/notes_hub_cubit.dart';
 
 class _MockList extends Mock implements ListNotesUseCase {}
 

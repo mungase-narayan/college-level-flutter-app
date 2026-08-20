@@ -4,9 +4,9 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:college_level/core/error/failures.dart';
 import 'package:college_level/core/network/api_response.dart';
-import 'package:college_level/features/practice/domain/entities/practice_question.dart';
-import 'package:college_level/features/practice/domain/usecases/practice_usecases.dart';
-import 'package:college_level/features/practice/presentation/bloc/practice_list_cubit.dart';
+import 'package:college_level/features/student/practice/domain/entities/practice_question.dart';
+import 'package:college_level/features/student/practice/domain/usecases/practice_usecases.dart';
+import 'package:college_level/features/student/practice/presentation/bloc/practice_list_cubit.dart';
 
 class _MockList extends Mock implements ListPracticeQuestionsUseCase {}
 

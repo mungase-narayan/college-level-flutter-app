@@ -35,7 +35,9 @@ class AppButton extends StatelessWidget {
   Widget build(BuildContext context) {
     if (context.useGlass) {
       // Heights are identical across the two enums (38 / 48 / 54), so swapping
-      // in the glass branch never reflows a screen.
+      // in the glass branch never reflows a screen. The Material branch below
+      // needs `shrinkWrap` to hold to that — its default tap-target padding
+      // silently floors every button at 48.
       return LiquidGlassButton(
         label: label,
         onPressed: onPressed,
@@ -58,9 +60,9 @@ class AppButton extends StatelessWidget {
 
     final scheme = context.scheme;
     final height = switch (size) {
-      AppButtonSize.sm => 38.0,
-      AppButtonSize.md => 48.0,
-      AppButtonSize.lg => 54.0,
+      AppButtonSize.sm => AppTheme.controlHeightSm,
+      AppButtonSize.md => AppTheme.controlHeightMd,
+      AppButtonSize.lg => AppTheme.controlHeightLg,
     };
     // A busy button must not fire again mid-flight.
     final enabled = onPressed != null && !isLoading;
@@ -85,13 +87,17 @@ class AppButton extends StatelessWidget {
     final button = switch (variant) {
       AppButtonVariant.primary => FilledButton(
           onPressed: enabled ? onPressed : null,
-          style: FilledButton.styleFrom(minimumSize: Size(0, height)),
+          style: FilledButton.styleFrom(
+            minimumSize: Size(0, height),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
           child: child,
         ),
       AppButtonVariant.destructive => FilledButton(
           onPressed: enabled ? onPressed : null,
           style: FilledButton.styleFrom(
             minimumSize: Size(0, height),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             backgroundColor: scheme.destructive,
             foregroundColor: Colors.white,
           ),
@@ -99,13 +105,17 @@ class AppButton extends StatelessWidget {
         ),
       AppButtonVariant.outline => OutlinedButton(
           onPressed: enabled ? onPressed : null,
-          style: OutlinedButton.styleFrom(minimumSize: Size(0, height)),
+          style: OutlinedButton.styleFrom(
+            minimumSize: Size(0, height),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
           child: child,
         ),
       AppButtonVariant.ghost => TextButton(
           onPressed: enabled ? onPressed : null,
           style: TextButton.styleFrom(
             minimumSize: Size(0, height),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             foregroundColor: scheme.foreground,
             padding: const EdgeInsets.symmetric(horizontal: 14),
           ),

@@ -1,13 +1,13 @@
 import 'package:college_level/core/config/theme/app_theme.dart';
 import 'package:college_level/core/error/failures.dart';
 import 'package:college_level/core/network/api_response.dart';
-import 'package:college_level/features/courses/domain/entities/course.dart';
-import 'package:college_level/features/courses/domain/entities/course_tree.dart';
-import 'package:college_level/features/courses/domain/entities/material_comment.dart';
-import 'package:college_level/features/courses/domain/repositories/course_repository.dart';
-import 'package:college_level/features/courses/domain/usecases/course_usecases.dart';
-import 'package:college_level/features/courses/presentation/bloc/courses_cubit.dart';
-import 'package:college_level/features/courses/presentation/pages/material_detail_page.dart';
+import 'package:college_level/features/student/courses/domain/entities/course.dart';
+import 'package:college_level/features/student/courses/domain/entities/course_tree.dart';
+import 'package:college_level/features/shared/material_comments/domain/entities/material_comment.dart';
+import 'package:college_level/features/student/courses/domain/repositories/course_repository.dart';
+import 'package:college_level/features/student/courses/domain/usecases/course_usecases.dart';
+import 'package:college_level/features/student/courses/presentation/bloc/courses_cubit.dart';
+import 'package:college_level/features/student/courses/presentation/pages/material_detail_page.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -108,14 +108,16 @@ class _FakeCourseRepository implements CourseRepository {
 
   @override
   Future<Either<Failure, List<MaterialComment>>> listComments(
-    String materialId,
-  ) async =>
+    String materialId, {
+    String? divisionId,
+  }) async =>
       const Right([]);
 
   @override
   Future<Either<Failure, MaterialComment>> createComment({
     required String materialId,
     required String content,
+    String? divisionId,
   }) async =>
       throw UnimplementedError();
 

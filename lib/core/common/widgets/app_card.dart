@@ -103,37 +103,84 @@ class AppSectionCard extends StatelessWidget {
       );
     }
 
-    final theme = Theme.of(context);
-    final scheme = context.scheme;
-
     return AppCard(
       padding: padding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              if (icon != null) ...[
-                Icon(icon, size: 18, color: scheme.primary),
-                const SizedBox(width: 8),
-              ],
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: theme.textTheme.titleSmall),
-                    if (subtitle != null)
-                      Text(subtitle!, style: theme.textTheme.bodySmall),
-                  ],
-                ),
-              ),
-              ?trailing,
-            ],
+          SectionCardHeader(
+            title: title,
+            subtitle: subtitle,
+            icon: icon,
+            trailing: trailing,
           ),
           const SizedBox(height: 14),
           child,
         ],
       ),
+    );
+  }
+}
+
+/// The `icon · title / subtitle` header both section-card variants draw.
+///
+/// The icon and the trailing slot are boxed to the **title's** line height and
+/// centred inside it, so they sit beside the heading. Left to a plain `Row`,
+/// which centres on the tallest child, a two-line header drops the icon into
+/// the gap between the title and the subtitle — pointing at neither.
+class SectionCardHeader extends StatelessWidget {
+  const SectionCardHeader({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.icon,
+    this.trailing,
+    this.gap = 8,
+  });
+
+  final String title;
+  final String? subtitle;
+  final IconData? icon;
+  final Widget? trailing;
+  final double gap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = context.scheme;
+    final subtitle = this.subtitle;
+
+    final titleStyle = theme.textTheme.titleSmall;
+    // Derived from the style rather than hardcoded: a change to the type scale
+    // would otherwise silently drift the icon off the heading again.
+    final titleLine = (titleStyle?.fontSize ?? 15) * (titleStyle?.height ?? 1.4);
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (icon != null) ...[
+          SizedBox(
+            height: titleLine,
+            child: Center(child: Icon(icon, size: 18, color: scheme.primary)),
+          ),
+          SizedBox(width: gap),
+        ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: titleStyle),
+              if (subtitle != null)
+                Text(subtitle, style: theme.textTheme.bodySmall),
+            ],
+          ),
+        ),
+        // Top-aligned rather than boxed to the title line: a trailing chip has
+        // its own padding and is usually taller than the line, so forcing it
+        // into that box clips it. Starting at the same edge as the title reads
+        // as aligned without constraining the child's height.
+        ?trailing,
+      ],
     );
   }
 }

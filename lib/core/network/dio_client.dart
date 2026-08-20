@@ -121,6 +121,38 @@ class DioClient {
     );
   }
 
+  /// Uploads several files in one request to `POST /files/upload-multiple`.
+  ///
+  /// The multipart field name is **`files`** (plural) — the array form the
+  /// backend's multer config accepts, distinct from the singular `file` above.
+  /// The server caps a batch at ten; callers are expected to respect that.
+  Future<ApiResponse<T>> uploadFiles<T>({
+    required List<({String path, String name})> files,
+    String? folder,
+    bool isPublic = false,
+    required T Function(Object? data) parse,
+  }) async {
+    final form = FormData();
+    for (final file in files) {
+      form.files.add(
+        MapEntry(
+          'files',
+          await MultipartFile.fromFile(file.path, filename: file.name),
+        ),
+      );
+    }
+    return _send(
+      ApiUrls.fileUploadMultiple,
+      method: 'POST',
+      body: form,
+      query: {'isPublic': isPublic, 'folder': folder},
+      parse: parse,
+    );
+  }
+
+  /// The most files the backend accepts in one `upload-multiple` call.
+  static const maxBatchUpload = 10;
+
   // ── Plumbing ──────────────────────────────────────────────────────────────
 
   Future<ApiResponse<T>> _send<T>(
